@@ -401,7 +401,7 @@ function renderTetris(area){
 function renderVoxel(area) {
   area.innerHTML = `<div class="voxel-wrap">
     <div class="voxel-hud"><span id="voxelStatus">Dünya hazırlanıyor...</span><span>WASD: hareket · Space: zıpla · Sol tık: kır · Sağ tık: koy</span></div>
-    <div class="voxel-stage" id="voxelStage"><div class="voxel-crosshair">+</div><div class="voxel-start" id="voxelStart"><h3>Blok Dünyası</h3><p>3 boyutlu dünyayı keşfet ve kendi yapını kur.</p><button id="voxelPlay" class="game-action">Dünyaya gir</button></div></div>
+    <div class="voxel-stage" id="voxelStage"><div class="voxel-crosshair">+</div><div id="vxDamageFlash" style="position:absolute;inset:0;background:rgba(255,0,0,.0);pointer-events:none;z-index:5;transition:background .12s"></div><div class="voxel-start" id="voxelStart"><h3>Blok Dünyası</h3><p>3 boyutlu dünyayı keşfet ve kendi yapını kur.</p><button id="voxelPlay" class="game-action">Dünyaya gir</button></div></div>
     <div class="voxel-tools"><span>Blok seç:</span><button data-block="grass" class="selected">🟩 Çimen</button><button data-block="dirt">🟫 Toprak</button><button data-block="stone">⬜ Taş</button><button data-block="wood">🪵 Odun</button><button data-block="leaves">🌿 Yaprak</button></div>
     <p class="voxel-tip">Bilgisayarda en iyi deneyim için tam ekran al. Mobilde ekrana dokunarak kontrol desteklenmez.</p>
   </div>`;
@@ -437,6 +437,12 @@ function renderVoxel(area) {
     // Spawn area is flattened and cleared
     for(let x=-2;x<=2;x++) for(let z=-2;z<=2;z++){const h=height(x,z); for(let y=h+1;y<=h+5;y++){const ob=blocks.get(`${x},${y},${z}`);if(ob)remove(ob);}}
     camera.position.set(0,height(0,0)+2.1,0);
+ // First-person hand and held item, attached to the camera.
+ const hand=new THREE.Group();hand.position.set(.48,-.42,-.72);camera.add(hand);
+ const arm=new THREE.Mesh(new THREE.BoxGeometry(.22,.28,.55),new THREE.MeshLambertMaterial({color:0xc58a62}));arm.position.set(.02,-.12,.02);hand.add(arm);
+ const heldGeo=new THREE.BoxGeometry(.22,.22,.22);let heldMesh=new THREE.Mesh(heldGeo,mats.grass);heldMesh.position.set(0,.04,-.28);hand.add(heldMesh);
+ let handSwing=0;function refreshHeld(){let mat=mats[selected]||new THREE.MeshLambertMaterial({color:selected==="sword"?0xbfc8d4:selected==="pickaxe"?0x98734b:0x9b754c});heldMesh.material=mat;heldMesh.visible=!["cooked_meat"].includes(selected);if(selected==="sword"){heldMesh.scale.set(.55,2.2,.45);heldMesh.rotation.z=-.55}else if(selected==="pickaxe"){heldMesh.scale.set(1.8,.35,.35);heldMesh.rotation.z=-.5}else heldMesh.scale.set(1,1,1)}
+ refreshHeld();
     const ray=new THREE.Raycaster(); const center=new THREE.Vector2(0,0);
     function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
     resize(); const ro=new ResizeObserver(resize);ro.observe(stage);
@@ -501,7 +507,7 @@ function renderVoxel(area) {
     }
     loop(); status.textContent="Dünya hazır · 729 blok"; 
     area.querySelector("#voxelPlay").addEventListener("click",()=>{active=true;area.querySelector("#voxelStart").style.display="none";renderer.domElement.requestPointerLock?.();status.textContent="Keşfetmeye başla!";});
-    area.querySelectorAll("[data-block]").forEach(b=>b.addEventListener("click",()=>{selected=b.dataset.block;area.querySelectorAll("[data-block]").forEach(x=>x.classList.toggle("selected",x===b));}));
+    area.querySelectorAll("[data-block]").forEach(b=>b.addEventListener("click",()=>{selected=b.dataset.block;refreshHeld();area.querySelectorAll("[data-block]").forEach(x=>x.classList.toggle("selected",x===b));}));
   }).catch(()=>{status.textContent="3D motor yüklenemedi. İnternet bağlantısını kontrol edip tekrar aç.";});
 }
 
@@ -510,7 +516,7 @@ function renderVoxel(area) {
 function renderVoxel(area) {
  area.innerHTML=`<div class="voxel-wrap" style="position:relative">
  <div class="voxel-hud"><span id="vxStatus">Dünya hazırlanıyor...</span><span>WASD hareket · Space zıpla · Sol tık kır/saldır · Sağ tık koy · E envanter</span></div>
- <div class="voxel-stage" id="voxelStage"><div class="voxel-crosshair">+</div>
+ <div class="voxel-stage" id="voxelStage"><div class="voxel-crosshair">+</div><div id="vxDamageFlash" style="position:absolute;inset:0;background:rgba(255,0,0,.0);pointer-events:none;z-index:5;transition:background .12s"></div>
  <div id="vxStart" class="voxel-start"><h3>Blok Dünyası: Hayatta Kalma</h3><p>Keşfet, kaynak topla, eşya üret ve hayvanlarla karşılaş.</p><button id="vxPlay" class="game-action">Dünyaya gir</button></div>
  <div id="vxPanel" style="display:none;position:absolute;inset:5%;z-index:8;background:#101827ee;color:white;border:1px solid #65749a;border-radius:14px;padding:16px;overflow:auto">
  <div style="display:flex;justify-content:space-between;align-items:center"><b>🎒 Envanter ve üretim</b><button id="vxClose">Kapat (E)</button></div>
@@ -519,7 +525,7 @@ function renderVoxel(area) {
  <h3>🍖 Pişirme</h3><p style="font-size:13px">Çiğ et + odun = pişmiş et (3 odun tüketir).</p><button id="vxCook">Eti pişir</button>
  <p style="font-size:12px;opacity:.8">Topladığın kaynaklarla kazma, kılıç, tahta ve kamp ateşi üretebilirsin.</p>
  </div></div>
- <div id="vxVitals" style="display:flex;gap:14px;flex-wrap:wrap;padding:8px;color:white;background:#101827;border-radius:8px;margin-top:6px">❤️ <b id="vxHealth">100</b>　🍗 <b id="vxHunger">100</b>　🌲 <span id="vxDay">Gündüz</span></div>
+ <div id="vxVitals" style="display:flex;gap:14px;flex-wrap:wrap;padding:8px;color:white;background:#101827;border-radius:8px;margin-top:6px">❤️ <b id="vxHealth">♥♥♥♥♥♥♥♥♥♥</b>　🍗 <b id="vxHunger">🍗🍗🍗🍗🍗🍗🍗🍗🍗🍗</b>　🌲 <span id="vxDay">Gündüz</span></div>
  <div id="vxHotbar" style="display:flex;gap:5px;flex-wrap:wrap;padding:7px;justify-content:center"></div>
  <div class="voxel-tools"><span>Blok seç:</span><button data-block="grass" class="selected">🟩 Çimen</button><button data-block="dirt">🟫 Toprak</button><button data-block="stone">⬜ Taş</button><button data-block="wood">🪵 Odun</button><button data-block="leaves">🌿 Yaprak</button></div>
  <p class="voxel-tip">E: envanter · Hayvanlara yaklaş ve sol tıkla · Yiyecekleri envanterden kullan. Oyun bilgisayarda önerilir.</p></div>`;
@@ -529,9 +535,14 @@ function renderVoxel(area) {
  const keys={},blocks=new Map(),animals=[]; const colors={grass:0x55a447,dirt:0x805334,stone:0x858b91,wood:0x8b5a2b,leaves:0x2d803d,plank:0xb88950};
  const labels={grass:"Çimen",dirt:"Toprak",stone:"Taş",wood:"Odun",leaves:"Yaprak",raw_meat:"Çiğ et",cooked_meat:"Pişmiş et",plank:"Tahta",stick:"Çubuk",pickaxe:"Kazma",sword:"Kılıç",campfire:"Kamp ateşi"};
  const updateUI=()=>{
-  area.querySelector("#vxHealth").textContent=Math.max(0,Math.round(health));area.querySelector("#vxHunger").textContent=Math.max(0,Math.round(hunger));
+  const hp=Math.max(0,health),fullHp=Math.floor(hp/10),halfHp=(hp%10)>=5;
+  area.querySelector("#vxHealth").textContent="♥".repeat(fullHp)+(halfHp?"♥":"")+"♡".repeat(10-fullHp-(halfHp?1:0));
+  area.querySelector("#vxHealth").style.color="#ff4b62";
+  const food=Math.max(0,hunger),fullFood=Math.floor(food/10),halfFood=(food%10)>=5;
+  area.querySelector("#vxHunger").textContent="🍗".repeat(fullFood)+(halfFood?"◐":"")+"·".repeat(10-fullFood-(halfFood?1:0));
   area.querySelector("#vxInventory").innerHTML=Object.entries(inventory).filter(([k,v])=>v>0).map(([k,v])=>`<button data-use="${k}" style="padding:8px;background:#293750;color:white;border:1px solid #65749a;border-radius:7px">${labels[k]} × ${v}${["cooked_meat","raw_meat"].includes(k)?" · ye":""}</button>`).join("")||"Envanter boş";
-  area.querySelector("#vxHotbar").innerHTML=["grass","dirt","stone","wood","leaves","sword","pickaxe","cooked_meat"].map((k,i)=>`<button data-hot="${k}" style="background:${selected===k?"#647db5":"#202d43"};color:white;border:1px solid #8291ad;border-radius:6px;padding:6px 9px">${i+1} ${labels[k]}</button>`).join("");
+  const slots=["grass","dirt","stone","wood","leaves","plank","stick","pickaxe","sword","cooked_meat"];
+  area.querySelector("#vxHotbar").innerHTML=slots.map((k,i)=>`<button data-hot="${k}" style="background:${selected===k?"#647db5":"#202d43"};color:white;border:1px solid #8291ad;border-radius:6px;padding:6px 9px">${i===9?"0":i+1} ${labels[k]} ${inventory[k]||0}</button>`).join("");
  };
  const THREEPromise=import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js");
  THREEPromise.then(THREE=>{
@@ -546,9 +557,15 @@ function renderVoxel(area) {
  for(let x=-14;x<=14;x++)for(let z=-14;z<=14;z++){let h=height(x,z);add(x,h,z,"grass");for(let y=h-1;y>=h-3;y--)add(x,y,z,y===h-1?"dirt":"stone");if(Math.random()<.045&&Math.abs(x)+Math.abs(z)>6){for(let y=h+1;y<=h+3;y++)add(x,y,z,"wood");for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=2;dy<=4;dy++)if(Math.abs(dx)+Math.abs(dz)+(dy===4?1:0)<5)add(x+dx,h+dy,z+dz,"leaves");}}
  for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++){let h=height(x,z);for(let y=h+1;y<=h+5;y++){let m=blocks.get(`${x},${y},${z}`);if(m){scene.remove(m);blocks.delete(`${x},${y},${z}`)}}}
  camera.position.set(0,height(0,0)+2.1,0);
+ // First-person hand and held item, attached to the camera.
+ const hand=new THREE.Group();hand.position.set(.48,-.42,-.72);camera.add(hand);
+ const arm=new THREE.Mesh(new THREE.BoxGeometry(.22,.28,.55),new THREE.MeshLambertMaterial({color:0xc58a62}));arm.position.set(.02,-.12,.02);hand.add(arm);
+ const heldGeo=new THREE.BoxGeometry(.22,.22,.22);let heldMesh=new THREE.Mesh(heldGeo,mats.grass);heldMesh.position.set(0,.04,-.28);hand.add(heldMesh);
+ let handSwing=0;function refreshHeld(){let mat=mats[selected]||new THREE.MeshLambertMaterial({color:selected==="sword"?0xbfc8d4:selected==="pickaxe"?0x98734b:0x9b754c});heldMesh.material=mat;heldMesh.visible=!["cooked_meat"].includes(selected);if(selected==="sword"){heldMesh.scale.set(.55,2.2,.45);heldMesh.rotation.z=-.55}else if(selected==="pickaxe"){heldMesh.scale.set(1.8,.35,.35);heldMesh.rotation.z=-.5}else heldMesh.scale.set(1,1,1)}
+ refreshHeld();
  // Friendly voxel animals roam around the clearing.
  const animalMat=new THREE.MeshLambertMaterial({color:0xf1eee0}),pigMat=new THREE.MeshLambertMaterial({color:0xe99aa7});
- function spawnAnimal(x,z,pig=false){let group=new THREE.Group();let body=new THREE.Mesh(new THREE.BoxGeometry(.9,.55,.55),pig?pigMat:animalMat);body.position.y=.55;group.add(body);let head=new THREE.Mesh(new THREE.BoxGeometry(.42,.42,.42),pig?pigMat:animalMat);head.position.set(.48,.72,0);group.add(head);for(let dx of [-.25,.25])for(let dz of [-.18,.18]){let leg=new THREE.Mesh(new THREE.BoxGeometry(.14,.4,.14),pig?pigMat:animalMat);leg.position.set(dx,.2,dz);group.add(leg)}group.position.set(x,height(Math.round(x),Math.round(z))+.5,z);scene.add(group);animals.push({group,pig,life:2,dir:Math.random()*6.28,walk:0});}
+ function spawnAnimal(x,z,pig=false){let group=new THREE.Group();let body=new THREE.Mesh(new THREE.BoxGeometry(.9,.55,.55),pig?pigMat:animalMat);body.position.y=.55;group.add(body);let head=new THREE.Mesh(new THREE.BoxGeometry(.42,.42,.42),pig?pigMat:animalMat);head.position.set(.48,.72,0);group.add(head);let legs=[];for(let dx of [-.25,.25])for(let dz of [-.18,.18]){let leg=new THREE.Mesh(new THREE.BoxGeometry(.14,.4,.14),pig?pigMat:animalMat);leg.position.set(dx,.2,dz);group.add(leg);legs.push(leg)}group.position.set(x,height(Math.round(x),Math.round(z))+.5,z);scene.add(group);animals.push({group,pig,life:2,dir:Math.random()*6.28,walk:0,legs});}
  spawnAnimal(4,3);spawnAnimal(-5,2);spawnAnimal(3,-6,true);spawnAnimal(-6,-4,true);
  const ray=new THREE.Raycaster(),center=new THREE.Vector2(0,0);
  function resize(){let w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}resize();const ro=new ResizeObserver(resize);ro.observe(stage);
@@ -557,22 +574,24 @@ function renderVoxel(area) {
  document.addEventListener("pointerlockchange",()=>{locked=document.pointerLockElement===renderer.domElement;});
  document.addEventListener("mousemove",look);renderer.domElement.addEventListener("contextmenu",e=>e.preventDefault());
  function overlaps(px,py,pz){let r=.29,bottom=py-1.6,top=bottom+1.8;for(let x=Math.floor(px-r-.5);x<=Math.floor(px+r+.5);x++)for(let y=Math.floor(bottom-.5);y<=Math.floor(top+.5);y++)for(let z=Math.floor(pz-r-.5);z<=Math.floor(pz+r+.5);z++){if(!blocks.has(`${x},${y},${z}`))continue;if(px+r>x-.499&&px-r<x+.499&&top>y-.499&&bottom<y+.499&&pz+r>z-.499&&pz-r<z+.499)return true}return false}
- let vy=0,onGround=false,elapsed=0;
+ let vy=0,onGround=false,elapsed=0,fallStartY=camera.position.y,falling=false;
  function useItem(k){if(!inventory[k])return;if(k==="cooked_meat"){inventory[k]--;hunger=Math.min(100,hunger+35);health=Math.min(100,health+8)}else if(k==="raw_meat"){inventory[k]--;hunger=Math.min(100,hunger+12)}else return;updateUI();}
  function openInventory(){invOpen=!invOpen;area.querySelector("#vxPanel").style.display=invOpen?"block":"none";if(invOpen&&document.pointerLockElement)document.exitPointerLock();else if(!invOpen&&active)renderer.domElement.requestPointerLock?.();}
  function craft(item){const recipes={plank:{wood:1},stick:{plank:2},pickaxe:{plank:3,stone:3,stick:2},sword:{plank:2,stone:2,stick:1},campfire:{stone:5,wood:3}};let r=recipes[item];if(!r||!Object.entries(r).every(([k,v])=>inventory[k]>=v))return;Object.entries(r).forEach(([k,v])=>inventory[k]-=v);inventory[item]++;updateUI();status.textContent=labels[item]+" üretildi";}
- area.querySelector("#vxCraft").innerHTML=["plank","stick","pickaxe","sword","campfire"].map(k=>`<button data-craft="${k}">${labels[k]} üret</button>`).join("");
+ const patterns={plank:["🪵","","","","","","","",""],stick:["🪵","","","","🪵","","","",""],pickaxe:["🪨","🪨","🪨","","🪵","","","🪵",""],sword:["🪨","","","","🪨","","","🪵",""],campfire:["🪨","🪨","🪨","🪨","🪵","🪨","🪨","🪨","🪨"]};
+ area.querySelector("#vxCraft").innerHTML=["plank","stick","pickaxe","sword","campfire"].map(k=>`<button data-craft="${k}" style="background:#293750;color:white;border:1px solid #65749a;border-radius:8px;padding:8px"><b>${labels[k]}</b><div style="display:grid;grid-template-columns:repeat(3,18px);gap:2px;margin-top:5px">${patterns[k].map(v=>`<span style="background:#111d2c;width:18px;height:18px">${v}</span>`).join("")}</div><small>Üret</small></button>`).join("");
  area.querySelector("#vxInventory").addEventListener("click",e=>{let b=e.target.closest("[data-use]");if(b)useItem(b.dataset.use)});
  area.querySelector("#vxCraft").addEventListener("click",e=>{let b=e.target.closest("[data-craft]");if(b)craft(b.dataset.craft)});
  area.querySelector("#vxCook").onclick=()=>{if(inventory.raw_meat>0&&inventory.wood>=3){inventory.raw_meat--;inventory.wood-=3;inventory.cooked_meat++;updateUI();status.textContent="Et pişirildi!"}else status.textContent="Pişirmek için çiğ et ve 3 odun gerekli."};
  area.querySelector("#vxClose").onclick=openInventory;
- area.querySelector("#vxHotbar").addEventListener("click",e=>{let b=e.target.closest("[data-hot]");if(b){selected=b.dataset.hot;updateUI()}});
- area.querySelectorAll("[data-block]").forEach(b=>b.onclick=()=>{selected=b.dataset.block;area.querySelectorAll("[data-block]").forEach(x=>x.classList.toggle("selected",x===b));});
- function keydown(e){keys[e.code]=true;if(e.code==="KeyE"&&active){e.preventDefault();openInventory()}if(e.code.startsWith("Digit")){let arr=["grass","dirt","stone","wood","leaves","sword","pickaxe","cooked_meat"],n=Number(e.code.slice(5))-1;if(arr[n]){selected=arr[n];updateUI()}}}
+ area.querySelector("#vxHotbar").addEventListener("click",e=>{let b=e.target.closest("[data-hot]");if(b){selected=b.dataset.hot;refreshHeld();updateUI()}});
+ area.querySelectorAll("[data-block]").forEach(b=>b.onclick=()=>{selected=b.dataset.block;refreshHeld();area.querySelectorAll("[data-block]").forEach(x=>x.classList.toggle("selected",x===b));});
+ function keydown(e){keys[e.code]=true;if(e.code==="KeyE"&&active){e.preventDefault();openInventory()}if(e.code.startsWith("Digit")){let arr=["grass","dirt","stone","wood","leaves","plank","stick","pickaxe","sword","cooked_meat"],digit=e.code==="Digit0"?9:Number(e.code.slice(5))-1;if(arr[digit]){selected=arr[digit];refreshHeld();updateUI()}}}
  function keyup(e){keys[e.code]=false}document.addEventListener("keydown",keydown);document.addEventListener("keyup",keyup);
- renderer.domElement.addEventListener("mousedown",e=>{if(!active||!locked||invOpen)return;ray.setFromCamera(center,camera);let hit=ray.intersectObjects([...blocks.values(),...animals.flatMap(a=>a.group.children.map(o=>{o.userData.animal=a;return o}))]);if(!hit.length||hit[0].distance>6)return;let obj=hit[0].object;if(obj.userData.animal){let a=obj.userData.animal;if(e.button===0){a.life--;if(a.life<=0){scene.remove(a.group);animals.splice(animals.indexOf(a),1);inventory.raw_meat+=a.pig?2:1;updateUI();status.textContent="Hayvan avlandı: et topladın."}}return}let d=obj.userData;if(e.button===0){if(d.y<=-2)return;remove(obj);status.textContent=labels[d.type]+" toplandı"}else if(e.button===2){let n=hit[0].face.normal,x=d.x+Math.round(n.x),y=d.y+Math.round(n.y),z=d.z+Math.round(n.z);if((inventory[selected]||0)>0&&!overlaps(x,y+1.6,z)){add(x,y,z,selected);inventory[selected]--;updateUI()}}});
- function loop(){if(!stage.isConnected){cancelAnimationFrame(raf);document.removeEventListener("mousemove",look);document.removeEventListener("keydown",keydown);document.removeEventListener("keyup",keyup);ro.disconnect();return}raf=requestAnimationFrame(loop);if(active&&!invOpen){let f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),r=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw)),m=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)m.add(f);if(keys.KeyS||keys.ArrowDown)m.sub(f);if(keys.KeyD||keys.ArrowRight)m.add(r);if(keys.KeyA||keys.ArrowLeft)m.sub(r);if(m.lengthSq()){m.normalize().multiplyScalar(.12);let nx=camera.position.x+m.x,nz=camera.position.z+m.z;if(!overlaps(nx,camera.position.y,camera.position.z))camera.position.x=nx;if(!overlaps(camera.position.x,camera.position.y,nz))camera.position.z=nz}if(keys.Space&&onGround){vy=.19;onGround=false}vy=Math.max(vy-.009,-.35);let ny=camera.position.y+vy;if(!overlaps(camera.position.x,ny,camera.position.z)){camera.position.y=ny;onGround=false}else if(vy<0){vy=0;onGround=true}else vy=0;
- elapsed++;if(elapsed%600===0){hunger=Math.max(0,hunger-2);if(hunger===0)health=Math.max(0,health-2);if(health===0){status.textContent="Bayıldın! Sayfayı yenileyerek yeniden başla."}updateUI()}animals.forEach(a=>{a.walk++;if(a.walk%90===0)a.dir=Math.random()*6.28;let nx=a.group.position.x+Math.cos(a.dir)*.012,nz=a.group.position.z+Math.sin(a.dir)*.012;a.group.position.x=nx;a.group.position.z=nz;a.group.position.y=height(Math.round(nx),Math.round(nz))+.5});}
+ renderer.domElement.addEventListener("mousedown",e=>{if(!active||!locked||invOpen)return;hand.rotation.x=-.65;setTimeout(()=>{if(hand)hand.rotation.x=0},110);ray.setFromCamera(center,camera);let hit=ray.intersectObjects([...blocks.values(),...animals.flatMap(a=>a.group.children.map(o=>{o.userData.animal=a;return o}))]);if(!hit.length||hit[0].distance>6)return;let obj=hit[0].object;if(obj.userData.animal){let a=obj.userData.animal;if(e.button===0){a.life--;if(a.life<=0){scene.remove(a.group);animals.splice(animals.indexOf(a),1);inventory.raw_meat+=a.pig?2:1;updateUI();status.textContent="Hayvan avlandı: et topladın."}}return}let d=obj.userData;if(e.button===0){if(d.y<=-2)return;remove(obj);status.textContent=labels[d.type]+" toplandı"}else if(e.button===2){let n=hit[0].face.normal,x=d.x+Math.round(n.x),y=d.y+Math.round(n.y),z=d.z+Math.round(n.z);if((inventory[selected]||0)>0&&!overlaps(x,y+1.6,z)){add(x,y,z,selected);inventory[selected]--;updateUI()}}});
+ function loop(){if(!stage.isConnected){cancelAnimationFrame(raf);document.removeEventListener("mousemove",look);document.removeEventListener("keydown",keydown);document.removeEventListener("keyup",keyup);ro.disconnect();return}raf=requestAnimationFrame(loop);if(active&&!invOpen){let f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),r=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw)),m=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)m.add(f);if(keys.KeyS||keys.ArrowDown)m.sub(f);if(keys.KeyD||keys.ArrowRight)m.add(r);if(keys.KeyA||keys.ArrowLeft)m.sub(r);if(m.lengthSq()){m.normalize().multiplyScalar(.12);let nx=camera.position.x+m.x,nz=camera.position.z+m.z;if(!overlaps(nx,camera.position.y,camera.position.z))camera.position.x=nx;if(!overlaps(camera.position.x,camera.position.y,nz))camera.position.z=nz}if(keys.Space&&onGround){vy=.19;onGround=false}vy=Math.max(vy-.009,-.35);let ny=camera.position.y+vy;if(!overlaps(camera.position.x,ny,camera.position.z)){if(vy<0&&!falling){fallStartY=camera.position.y;falling=true}camera.position.y=ny;onGround=false}else if(vy<0){let drop=fallStartY-camera.position.y;if(falling&&drop>4){let damage=Math.min(100,Math.round((drop-3)*2)*5);health=Math.max(0,health-damage);let flash=area.querySelector("#vxDamageFlash");flash.style.background="rgba(255,0,0,.48)";setTimeout(()=>{if(flash.isConnected)flash.style.background="rgba(255,0,0,0)"},260);updateUI();status.textContent="Yüksekten düştün! Can kaybettin."}falling=false;vy=0;onGround=true}else{falling=false;vy=0}
+ if(m.lengthSq())hand.position.y=-.42+Math.sin(elapsed*.22)*.018;else hand.position.y=-.42;
+ elapsed++;if(elapsed%600===0){hunger=Math.max(0,hunger-2);if(hunger===0)health=Math.max(0,health-2);if(health===0){status.textContent="Bayıldın! Sayfayı yenileyerek yeniden başla."}updateUI()}animals.forEach(a=>{a.walk++;if(a.walk%90===0)a.dir=Math.random()*6.28;let nx=a.group.position.x+Math.cos(a.dir)*.012,nz=a.group.position.z+Math.sin(a.dir)*.012;a.group.position.x=nx;a.group.position.z=nz;a.group.position.y=height(Math.round(nx),Math.round(nz))+.5;a.legs.forEach((leg,i)=>{leg.rotation.x=Math.sin(a.walk*.12+(i%2)*Math.PI)*.55});a.group.rotation.y=-a.dir+Math.PI/2});}
  renderer.render(scene,camera)}
  updateUI();area.querySelector("#vxPlay").onclick=()=>{active=true;area.querySelector("#vxStart").style.display="none";renderer.domElement.requestPointerLock?.();status.textContent="Hayatta kalmaya başla!"};status.textContent="Dünya hazır · Hayvanlar çevrede";loop();
  }).catch(()=>{status.textContent="3D motor yüklenemedi. İnternet bağlantısını kontrol et."});
