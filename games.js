@@ -436,7 +436,7 @@ function renderVoxel(area) {
     }
     // Spawn area is flattened and cleared
     for(let x=-2;x<=2;x++) for(let z=-2;z<=2;z++){const h=height(x,z); for(let y=h+1;y<=h+5;y++){const ob=blocks.get(`${x},${y},${z}`);if(ob)remove(ob);}}
-    camera.position.set(0,height(0,5)+3,7);
+    camera.position.set(0,height(0,5)+2.1,7);
     const ray=new THREE.Raycaster(); const center=new THREE.Vector2(0,0);
     function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
     resize(); const ro=new ResizeObserver(resize);ro.observe(stage);
@@ -457,6 +457,20 @@ function renderVoxel(area) {
     function keyup(e){keys[e.code]=false;}
     window.addEventListener("keydown",keydown);window.addEventListener("keyup",keyup);
     let vy=0,onGround=false;
+    const playerRadius=.29, playerHeight=1.8, eyeHeight=1.6;
+    // Oyuncunun ayak-gövde kutusunun bloklarla çarpışmasını denetle.
+    function overlapsAt(px,py,pz){
+      const minX=px-playerRadius,maxX=px+playerRadius;
+      const minY=py-eyeHeight,maxY=minY+playerHeight;
+      const minZ=pz-playerRadius,maxZ=pz+playerRadius;
+      for(let x=Math.floor(minX-.5);x<=Math.floor(maxX+.5);x++)
+        for(let y=Math.floor(minY-.5);y<=Math.floor(maxY+.5);y++)
+          for(let z=Math.floor(minZ-.5);z<=Math.floor(maxZ+.5);z++){
+            if(!blocks.has(`${x},${y},${z}`))continue;
+            if(maxX>x-.5+.001&&minX<x+.5-.001&&maxY>y-.5+.001&&minY<y+.5-.001&&maxZ>z-.5+.001&&minZ<z+.5-.001)return true;
+          }
+      return false;
+    }
     function loop(){
       if(!stage.isConnected){cancelAnimationFrame(raf);document.removeEventListener("mousemove",look);window.removeEventListener("keydown",keydown);window.removeEventListener("keyup",keyup);ro.disconnect();return;}
       raf=requestAnimationFrame(loop);
@@ -466,10 +480,22 @@ function renderVoxel(area) {
         const move=new THREE.Vector3();
         if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);
         if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);
-        if(move.lengthSq()) {move.normalize().multiplyScalar(.12);camera.position.add(move);}
-        const ground=height(Math.round(camera.position.x),Math.round(-camera.position.z))+1.65;
-        if(keys.Space&&onGround){vy=.19;onGround=false;} vy-=.009;camera.position.y+=vy;
-        if(camera.position.y<ground){camera.position.y=ground;vy=0;onGround=true;}
+        if(move.lengthSq()){
+          move.normalize().multiplyScalar(.12);
+          const nx=camera.position.x+move.x,nz=camera.position.z+move.z;
+          if(!overlapsAt(nx,camera.position.y,camera.position.z))camera.position.x=nx;
+          if(!overlapsAt(camera.position.x,camera.position.y,nz))camera.position.z=nz;
+        }
+        if(keys.Space&&onGround){vy=.19;onGround=false;}
+        vy=Math.max(vy-.009,-.35);
+        const nextY=camera.position.y+vy;
+        if(!overlapsAt(camera.position.x,nextY,camera.position.z)){camera.position.y=nextY;onGround=false;}
+        else if(vy<0){
+          // Zemine inerken ayakları bloğun üst yüzeyine oturt.
+          let safeY=camera.position.y;
+          for(let i=0;i<24;i++){const test=safeY-.025;if(overlapsAt(camera.position.x,test,camera.position.z))break;safeY=test;}
+          camera.position.y=safeY;vy=0;onGround=true;
+        }else{vy=0;}
       }
       renderer.render(scene,camera);
     }
