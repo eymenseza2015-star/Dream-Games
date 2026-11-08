@@ -20,7 +20,7 @@
       <a class="primary-button" href="#oyunlar">Oyunları keşfet <span aria-hidden="true">→</span></a>
     </section>
     <section id="oyunlar" class="games-section">
-      <div class="section-heading"><div><p class="eyebrow">OYUN KÜTÜPHANESİ</p><h2>Oyunlar</h2></div><span class="game-count">Şu an 3 oyun</span></div>
+      <div class="section-heading"><div><p class="eyebrow">OYUN KÜTÜPHANESİ</p><h2>Oyunlar</h2></div><span class="game-count">Şu an 4 oyun</span></div>
       <div class="library-tools" aria-label="Oyun arama ve filtreleme">
         <label class="search-box"><span aria-hidden="true">⌕</span><input id="gameSearch" type="search" placeholder="Oyun ara..." autocomplete="off" aria-label="Oyun ara"><kbd>/</kbd></label>
         <div class="filter-list" role="group" aria-label="Oyun kategorileri">
@@ -28,6 +28,7 @@
           <button class="filter-button" type="button" data-filter="Yarış" aria-pressed="false">🏎️ Yarış</button>
           <button class="filter-button" type="button" data-filter="Hafıza" aria-pressed="false">🧠 Hafıza</button>
           <button class="filter-button" type="button" data-filter="Zekâ" aria-pressed="false">✕ Zekâ</button>
+          <button class="filter-button" type="button" data-filter="Arcade" aria-pressed="false">🕹️ Arcade</button>
         </div>
       </div>
       <p class="search-result" id="searchResult" aria-live="polite"></p>
@@ -44,6 +45,13 @@
           <div class="game-info"><div><span class="tag">Hafıza</span><span class="tag">Tek oyuncu</span></div>
             <h3>Hafıza Eşleştirme</h3><p>Kapalı kartları aç, aynı sembolleri bul ve en az hamleyle tamamla.</p>
             <button class="play-button" data-game="memory">Oyunu oyna <span>→</span></button>
+          </div>
+        </article>
+        <article class="game-card" data-category="Arcade">
+          <div class="game-art art-snake"><span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">✧</span><span class="art-main-icon">🐍</span><span class="art-caption">YEMLERİ TOPLA</span></div>
+          <div class="game-info"><div><span class="tag">Arcade</span><span class="tag">Tek oyuncu</span></div>
+            <h3>Yılan Oyunu</h3><p>Yılanı yönlendir, yemleri topla ve kendi kuyruğuna çarpmadan büyü!</p>
+            <button class="play-button" data-game="snake">Oyunu oyna <span>→</span></button>
           </div>
         </article>
         <article class="game-card" data-category="Zekâ">

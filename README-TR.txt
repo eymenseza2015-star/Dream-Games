@@ -21,3 +21,5 @@ OYUN KONTROLLERİ
 - Dosya adlarını aynen koruyun: index.html, style.css, games.js, main.js.
 - Depodaki eski Türkçe isimli dosyaları silmek zorunda değilsiniz; site bu İngilizce isimli dosyaları kullanır.
 - Oyun ve site tamamen tarayıcıda çalışır; sunucu veya ücretli hizmet gerektirmez.
+
+Yeni sürüm: Yılan Oyunu eklendi. Oyun içi yön tuşları/WASD ve mobil dokunmatik kontroller desteklenir.

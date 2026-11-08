@@ -122,3 +122,18 @@ button:focus-visible,a:focus-visible{outline:3px solid #63dfff;outline-offset:3p
 .search-result{min-height:18px;margin:0 0 10px;color:var(--muted);font-size:11px}.game-card[hidden]{display:none!important}
 .no-games{grid-column:1/-1;text-align:center;padding:38px 18px;border:1px dashed #7d8bb855;border-radius:16px;color:var(--muted);background:#ffffff05}.no-games strong{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
 @media(max-width:600px){.library-tools{align-items:stretch}.search-box{max-width:none;flex-basis:100%}.filter-list{width:100%;gap:6px}.filter-button{flex:1;padding:9px 8px;font-size:10px}}
+
+
+/* Yılan Oyunu kartı */
+.art-snake{background:radial-gradient(circle at 50% 45%,#21866b 0%,#124b49 48%,#102b3b 100%)}
+.snake-wrap{max-width:520px;margin:0 auto;color:var(--ink)}
+.snake-hud{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;color:var(--muted);font-weight:700;font-size:13px}
+.snake-board{display:block;width:min(100%,420px);height:auto;margin:0 auto;border:1px solid #5ce0b766;border-radius:14px;background:#071b25;box-shadow:0 12px 35px #0005;touch-action:none}
+.snake-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:14px 0 8px}
+.snake-actions button,.snake-pad button{border:1px solid var(--line);background:#ffffff10;color:var(--ink);border-radius:11px;padding:10px 16px;font:700 13px "DM Sans",Arial,sans-serif;cursor:pointer}
+.snake-actions button.primary{background:linear-gradient(110deg,#7665f5,#477fe9);border:0;color:white}
+.snake-pad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(2,42px);gap:6px;justify-content:center;margin:12px auto 4px}
+.snake-pad button{padding:0;font-size:18px;touch-action:manipulation}
+.snake-pad [data-dir="up"]{grid-column:2;grid-row:1}.snake-pad [data-dir="left"]{grid-column:1;grid-row:2}.snake-pad [data-dir="down"]{grid-column:2;grid-row:2}.snake-pad [data-dir="right"]{grid-column:3;grid-row:2}
+.snake-help{text-align:center;color:var(--muted);font-size:12px;margin:10px 0 0}
+@media(min-width:700px){.snake-pad{display:none}}

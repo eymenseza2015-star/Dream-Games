@@ -121,3 +121,48 @@ function renderRace(area) {
   observer.observe(area,{childList:true,subtree:true});
   reset();
 }
+
+
+// Yılan Oyunu
+function renderSnake(area) {
+  area.innerHTML = `
+    <div class="snake-wrap">
+      <div class="snake-hud"><span id="snakeScore">Puan: 0</span><span id="snakeBest">Rekor: 0</span><span id="snakeStatus">Başlamaya hazır</span></div>
+      <canvas id="snakeCanvas" class="snake-board" width="400" height="400" aria-label="Yılan oyunu alanı"></canvas>
+      <div class="snake-actions"><button class="primary" id="snakeStart">Başlat / Yeniden başlat</button><button id="snakePause">Duraklat</button></div>
+      <div class="snake-pad" aria-label="Dokunmatik yön tuşları"><button data-dir="up" aria-label="Yukarı">↑</button><button data-dir="left" aria-label="Sola">←</button><button data-dir="down" aria-label="Aşağı">↓</button><button data-dir="right" aria-label="Sağa">→</button></div>
+      <p class="snake-help">Bilgisayarda yön tuşları veya WASD, telefonda ok tuşlarıyla oyna.</p>
+    </div>`;
+  const canvas=area.querySelector('#snakeCanvas'), ctx=canvas.getContext('2d');
+  const scoreEl=area.querySelector('#snakeScore'), bestEl=area.querySelector('#snakeBest'), statusEl=area.querySelector('#snakeStatus');
+  const size=20, cells=20; let snake, direction, nextDirection, food, score, running=false, paused=false, timer=null;
+  let best=Number(localStorage.getItem('dreamSnakeBest')||0); bestEl.textContent=`Rekor: ${best}`;
+  function randomFood(){let f; do{f={x:Math.floor(Math.random()*cells),y:Math.floor(Math.random()*cells)}}while(snake.some(s=>s.x===f.x&&s.y===f.y));return f;}
+  function draw(){
+    ctx.fillStyle='#071b25';ctx.fillRect(0,0,400,400);
+    ctx.strokeStyle='rgba(125,210,190,.08)';ctx.lineWidth=1;
+    for(let i=0;i<=cells;i++){ctx.beginPath();ctx.moveTo(i*size,0);ctx.lineTo(i*size,400);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*size);ctx.lineTo(400,i*size);ctx.stroke();}
+    ctx.fillStyle='#ffca65';ctx.beginPath();ctx.arc(food.x*size+10,food.y*size+10,7,0,Math.PI*2);ctx.fill();
+    snake.forEach((part,i)=>{ctx.fillStyle=i===0?'#69f0b5':'#28bd8b';ctx.beginPath();ctx.roundRect(part.x*size+2,part.y*size+2,size-4,size-4,6);ctx.fill();});
+    if(!running){ctx.fillStyle='rgba(3,12,20,.62)';ctx.fillRect(0,0,400,400);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 22px sans-serif';ctx.fillText(score>0?'Oyun bitti!':'YILAN OYUNU',200,185);ctx.font='14px sans-serif';ctx.fillText(score>0?'Tekrar başlat ve rekorunu geliştir':'Başlat düğmesine bas',200,215);}
+    if(paused&&running){ctx.fillStyle='rgba(3,12,20,.55)';ctx.fillRect(0,0,400,400);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 24px sans-serif';ctx.fillText('DURAKLATILDI',200,205);}
+  }
+  function stop(){running=false;paused=false;if(timer)clearInterval(timer);timer=null;}
+  function finish(){stop();statusEl.textContent='Oyun bitti';if(score>best){best=score;localStorage.setItem('dreamSnakeBest',best);}bestEl.textContent=`Rekor: ${best}`;draw();}
+  function step(){if(!running||paused)return;direction=nextDirection;const head={x:snake[0].x+direction.x,y:snake[0].y+direction.y};
+    const eating=head.x===food.x&&head.y===food.y;const body=eating?snake:snake.slice(0,-1);
+    if(head.x<0||head.x>=cells||head.y<0||head.y>=cells||body.some(p=>p.x===head.x&&p.y===head.y)){finish();return;}
+    snake.unshift(head);if(eating){score+=10;scoreEl.textContent=`Puan: ${score}`;food=randomFood();}else snake.pop();draw();
+  }
+  function start(){stop();snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];direction={x:1,y:0};nextDirection={x:1,y:0};score=0;scoreEl.textContent='Puan: 0';food=randomFood();running=true;statusEl.textContent='Oynuyorsun';draw();timer=setInterval(step,125);}
+  function turn(dir){const map={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}};const d=map[dir];if(!d||d.x===-direction.x&&d.y===-direction.y)return;nextDirection=d;if(!running)start();}
+  function onKey(e){const keys={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};const dir=keys[e.key];if(dir){e.preventDefault();turn(dir);}else if(e.key===' '&&running){e.preventDefault();togglePause();}}
+  function togglePause(){if(!running)return;paused=!paused;statusEl.textContent=paused?'Duraklatıldı':'Oynuyorsun';area.querySelector('#snakePause').textContent=paused?'Devam et':'Duraklat';draw();}
+  document.addEventListener('keydown',onKey);
+  area.querySelectorAll('[data-dir]').forEach(b=>b.addEventListener('click',()=>turn(b.dataset.dir)));
+  area.querySelector('#snakeStart').addEventListener('click',start);
+  area.querySelector('#snakePause').addEventListener('click',togglePause);
+  const observer=new MutationObserver(()=>{if(!area.isConnected||!area.querySelector('#snakeCanvas')){stop();document.removeEventListener('keydown',onKey);observer.disconnect();}});
+  observer.observe(area,{childList:true,subtree:true});
+  snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];direction={x:1,y:0};nextDirection={x:1,y:0};food={x:14,y:10};score=0;draw();
+}
