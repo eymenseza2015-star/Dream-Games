@@ -9,6 +9,7 @@ document.querySelectorAll("[data-game]").forEach(button => {
     if (game === "memory") { modalTitle.textContent = "Hafıza Eşleştirme"; renderMemory(gameArea); }
     if (game === "tictactoe") { modalTitle.textContent = "XOX"; renderTicTacToe(gameArea); }
     if (game === "snake") { modalTitle.textContent = "Yılan Oyunu"; renderSnake(gameArea); }
+    if (game === "flappy") { modalTitle.textContent = "Uçan Kuş"; renderFlappy(gameArea); }
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.getElementById("closeModal").focus();
   });
 });

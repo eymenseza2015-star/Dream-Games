@@ -166,3 +166,121 @@ function renderSnake(area) {
   observer.observe(area,{childList:true,subtree:true});
   snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];direction={x:1,y:0};nextDirection={x:1,y:0};food={x:14,y:10};score=0;draw();
 }
+
+
+function renderFlappy(area) {
+  area.innerHTML = `
+    <div class="flappy-wrap">
+      <div class="snake-hud"><span id="flappyScore">Puan: 0</span><span id="flappyBest">Rekor: ${Number(localStorage.getItem("dreamFlappyBest") || 0)}</span></div>
+      <canvas id="flappyCanvas" class="flappy-canvas" width="420" height="560" aria-label="Uçan Kuş oyun alanı"></canvas>
+      <p class="game-status" id="flappyStatus">Başlamak ve kanat çırpmak için dokun veya Boşluk tuşuna bas.</p>
+      <div class="game-actions"><button class="secondary-button" id="flappyRestart">Yeniden başlat</button></div>
+    </div>`;
+  const canvas=area.querySelector("#flappyCanvas"), ctx=canvas.getContext("2d");
+  const scoreEl=area.querySelector("#flappyScore"), bestEl=area.querySelector("#flappyBest");
+  const status=area.querySelector("#flappyStatus");
+  const W=canvas.width,H=canvas.height, ground=48, bird={x:105,y:245,r:15};
+  let pipes=[], score=0, velocity=0, frame=0, state="ready", raf=0, lastTime=0;
+  const gravity=.38, flap=-6.4, pipeW=66, gap=155;
+
+  function reset(){
+    cancelAnimationFrame(raf); pipes=[]; score=0; velocity=0; frame=0;
+    bird.y=245; state="ready"; lastTime=0;
+    scoreEl.textContent="Puan: 0";
+    status.textContent="Başlamak ve kanat çırpmak için dokun veya Boşluk tuşuna bas.";
+    draw();
+  }
+  function spawnPipe(){
+    const top=75+Math.random()*205;
+    pipes.push({x:W+10,top,passed:false});
+  }
+  function draw(){
+    const sky=ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,"#70c9f2"); sky.addColorStop(1,"#d3f3ff");
+    ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+    // Uzak bulutlar
+    ctx.fillStyle="#ffffff99";
+    [[65,90,28],[265,150,36],[350,65,22]].forEach(([x,y,r])=>{
+      ctx.beginPath();ctx.arc(x,y,r*.55,0,Math.PI*2);ctx.arc(x+r*.45,y-8,r*.7,0,Math.PI*2);ctx.arc(x+r,y,r*.5,0,Math.PI*2);ctx.fill();
+    });
+    pipes.forEach(pipe=>{
+      const bottomY=pipe.top+gap;
+      const grad=ctx.createLinearGradient(pipe.x,0,pipe.x+pipeW,0);
+      grad.addColorStop(0,"#16854b");grad.addColorStop(.5,"#42c66d");grad.addColorStop(1,"#116c40");
+      ctx.fillStyle=grad;
+      ctx.fillRect(pipe.x,0,pipeW,pipe.top-18);
+      ctx.fillRect(pipe.x-5,pipe.top-18,pipeW+10,18);
+      ctx.fillRect(pipe.x,bottomY+18,pipeW,H-ground-bottomY-18);
+      ctx.fillRect(pipe.x-5,bottomY,pipeW+10,18);
+    });
+    ctx.fillStyle="#d7b36a";ctx.fillRect(0,H-ground,W,ground);
+    ctx.fillStyle="#65b94e";ctx.fillRect(0,H-ground,W,10);
+    // Kuş
+    ctx.save();ctx.translate(bird.x,bird.y);ctx.rotate(Math.max(-.45,Math.min(.75,velocity*.07)));
+    ctx.fillStyle="#ffd34e";ctx.beginPath();ctx.ellipse(0,0,17,13,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#f29b38";ctx.beginPath();ctx.ellipse(-5,5,9,5,-.4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(7,-5,5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#182333";ctx.beginPath();ctx.arc(9,-5,2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#f0783b";ctx.beginPath();ctx.moveTo(14,1);ctx.lineTo(27,5);ctx.lineTo(14,8);ctx.fill();
+    ctx.restore();
+    if(state==="ready"||state==="over"){
+      ctx.fillStyle="#122033dd";ctx.fillRect(35,205,W-70,112);
+      ctx.textAlign="center";ctx.fillStyle="#fff";ctx.font="bold 25px Arial";
+      ctx.fillText(state==="ready"?"UÇMAYA HAZIR MISIN?":"OYUN BİTTİ",W/2,250);
+      ctx.font="16px Arial";ctx.fillText(state==="ready"?"Dokun veya BOŞLUK'a bas":`Puanın: ${score}`,W/2,282);
+    }
+  }
+  function flapBird(){
+    if(state==="over")return;
+    if(state==="ready"){state="playing";status.textContent="Harika! Borulara çarpmadan ilerle.";}
+    velocity=flap;
+  }
+  function hitPipe(pipe){
+    const withinX=bird.x+bird.r>pipe.x && bird.x-bird.r<pipe.x+pipeW;
+    return withinX && (bird.y-bird.r<pipe.top || bird.y+bird.r>pipe.top+gap);
+  }
+  function endGame(){
+    state="over";
+    const best=Math.max(score,Number(localStorage.getItem("dreamFlappyBest")||0));
+    localStorage.setItem("dreamFlappyBest",best);
+    bestEl.textContent=`Rekor: ${best}`;
+    status.textContent="Oyun bitti. Yeniden başlatıp tekrar deneyebilirsin.";
+  }
+  function loop(time){
+    if(state!=="playing")return;
+    const delta=lastTime?Math.min(2,(time-lastTime)/16.67):1;lastTime=time;
+    frame+=delta;velocity+=gravity*delta;bird.y+=velocity*delta;
+    if(frame>75 && frame%105<delta)spawnPipe();
+    pipes.forEach(pipe=>{
+      pipe.x-=2.7*delta;
+      if(!pipe.passed && pipe.x+pipeW<bird.x){pipe.passed=true;score++;scoreEl.textContent=`Puan: ${score}`;}
+    });
+    pipes=pipes.filter(pipe=>pipe.x+pipeW>-10);
+    if(bird.y-bird.r<0 || bird.y+bird.r>H-ground || pipes.some(hitPipe))endGame();
+    draw();
+    if(state==="playing")raf=requestAnimationFrame(loop);
+  }
+  function action(){
+    if(state==="ready"){flapBird();raf=requestAnimationFrame(loop);}
+    else if(state==="playing")flapBird();
+  }
+  function onKey(e){
+    if(e.code==="Space"||e.key==="ArrowUp"){
+      e.preventDefault();
+      if(state==="ready"){action();} else if(state==="playing"){flapBird();}
+      else if(state==="over"){reset();}
+    }
+  }
+  function onPointer(e){if(e.target.closest("#flappyRestart"))return; e.preventDefault(); if(state==="ready"){action();}else if(state==="playing"){flapBird();}}
+  canvas.addEventListener("pointerdown",onPointer);
+  document.addEventListener("keydown",onKey);
+  area.querySelector("#flappyRestart").addEventListener("click",reset);
+  const observer=new MutationObserver(()=>{
+    if(!area.isConnected||!area.querySelector("#flappyCanvas")){
+      cancelAnimationFrame(raf);document.removeEventListener("keydown",onKey);
+      canvas.removeEventListener("pointerdown",onPointer);observer.disconnect();
+    }
+  });
+  observer.observe(area,{childList:true,subtree:true});
+  draw();
+}
