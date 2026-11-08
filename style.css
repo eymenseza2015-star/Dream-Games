@@ -109,3 +109,16 @@ button:focus-visible,a:focus-visible{outline:3px solid #63dfff;outline-offset:3p
  .race-hud{font-size:11px}.race-controls button{width:90px;height:52px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* Oyun arama ve kategori filtreleri */
+.library-tools{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:-4px 0 12px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:10px;min-width:min(100%,280px);max-width:360px;flex:1;background:#ffffff0b;border:1px solid var(--line);border-radius:12px;padding:0 13px;color:#aeb9d6;transition:border-color .2s,box-shadow .2s}
+.search-box:focus-within{border-color:#8b7cff;box-shadow:0 0 0 3px #7868ff20}
+.search-box>span{font-size:23px;line-height:1}.search-box input{width:100%;min-width:0;background:transparent;border:0;outline:0;color:var(--ink);font:600 13px "DM Sans",Arial,sans-serif;padding:13px 0}.search-box input::placeholder{color:#8995b2}
+.search-box kbd{border:1px solid #ffffff24;border-radius:5px;padding:2px 7px;font-size:11px;color:#8995b2}
+.filter-list{display:flex;gap:8px;flex-wrap:wrap}.filter-button{border:1px solid var(--line);background:#ffffff08;color:#bfc8e4;border-radius:22px;padding:9px 13px;font:700 11px "DM Sans",Arial,sans-serif;cursor:pointer;transition:background .2s,border-color .2s,color .2s,transform .2s}
+.filter-button:hover{transform:translateY(-2px);border-color:#9385ff88;color:white}.filter-button.active{background:linear-gradient(110deg,#7665f5,#477fe9);border-color:transparent;color:white;box-shadow:0 5px 18px #5e61e633}
+.search-result{min-height:18px;margin:0 0 10px;color:var(--muted);font-size:11px}.game-card[hidden]{display:none!important}
+.no-games{grid-column:1/-1;text-align:center;padding:38px 18px;border:1px dashed #7d8bb855;border-radius:16px;color:var(--muted);background:#ffffff05}.no-games strong{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
+@media(max-width:600px){.library-tools{align-items:stretch}.search-box{max-width:none;flex-basis:100%}.filter-list{width:100%;gap:6px}.filter-button{flex:1;padding:9px 8px;font-size:10px}}

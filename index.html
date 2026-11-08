@@ -21,22 +21,32 @@
     </section>
     <section id="oyunlar" class="games-section">
       <div class="section-heading"><div><p class="eyebrow">OYUN KÜTÜPHANESİ</p><h2>Oyunlar</h2></div><span class="game-count">Şu an 3 oyun</span></div>
+      <div class="library-tools" aria-label="Oyun arama ve filtreleme">
+        <label class="search-box"><span aria-hidden="true">⌕</span><input id="gameSearch" type="search" placeholder="Oyun ara..." autocomplete="off" aria-label="Oyun ara"><kbd>/</kbd></label>
+        <div class="filter-list" role="group" aria-label="Oyun kategorileri">
+          <button class="filter-button active" type="button" data-filter="all" aria-pressed="true">Tümü</button>
+          <button class="filter-button" type="button" data-filter="Yarış" aria-pressed="false">🏎️ Yarış</button>
+          <button class="filter-button" type="button" data-filter="Hafıza" aria-pressed="false">🧠 Hafıza</button>
+          <button class="filter-button" type="button" data-filter="Zekâ" aria-pressed="false">✕ Zekâ</button>
+        </div>
+      </div>
+      <p class="search-result" id="searchResult" aria-live="polite"></p>
       <div class="game-grid">
-        <article class="game-card">
+        <article class="game-card" data-category="Yarış">
           <div class="game-art art-race"><span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">✧</span><span class="art-main-icon">🏎️</span><span class="art-caption">HIZINI GÖSTER</span></div>
           <div class="game-info"><div><span class="tag">Yarış</span><span class="tag">Tek oyuncu</span></div>
             <h3>Turbo Yarış</h3><p>Aracını yönlendir, trafikten kaç ve en yüksek puanı yap!</p>
             <button class="play-button" data-game="race">Oyunu oyna <span>→</span></button>
           </div>
         </article>
-        <article class="game-card">
+        <article class="game-card" data-category="Hafıza">
           <div class="game-art art-memory"><span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">✧</span><span class="art-main-icon">🧠</span><span class="art-caption">HAFIZANI DENE</span></div>
           <div class="game-info"><div><span class="tag">Hafıza</span><span class="tag">Tek oyuncu</span></div>
             <h3>Hafıza Eşleştirme</h3><p>Kapalı kartları aç, aynı sembolleri bul ve en az hamleyle tamamla.</p>
             <button class="play-button" data-game="memory">Oyunu oyna <span>→</span></button>
           </div>
         </article>
-        <article class="game-card">
+        <article class="game-card" data-category="Zekâ">
           <div class="game-art art-tictactoe"><span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">✧</span><span class="art-main-icon">✕ <i>○</i></span><span class="art-caption">SIRA SENDE</span></div>
           <div class="game-info"><div><span class="tag">Zekâ</span><span class="tag">2 oyuncu</span></div>
             <h3>XOX</h3><p>Arkadaşınla sırayla oyna. Yatay, dikey veya çapraz üçlü yap!</p>
