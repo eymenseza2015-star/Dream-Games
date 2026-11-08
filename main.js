@@ -15,6 +15,7 @@ document.querySelectorAll("[data-game]").forEach(button => {
     if (game === "mines") { modalTitle.textContent = "Mayın Tarlası"; renderMines(gameArea); }
     if (game === "rps") { modalTitle.textContent = "Taş-Kâğıt-Makas"; renderRPS(gameArea); }
     if (game === "tetris") { modalTitle.textContent = "Tetris"; renderTetris(gameArea); }
+    if (game === "voxel") { modalTitle.textContent = "Blok Dünyası"; renderVoxel(gameArea); }
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.getElementById("closeModal").focus();
   });
 });

@@ -170,3 +170,21 @@ button:focus-visible,a:focus-visible{outline:3px solid #63dfff;outline-offset:3p
 .mine-cell.revealed{background:#dce5ef;color:#25334a;cursor:default}.mine-cell[data-num="1"]{color:#2673d9}.mine-cell[data-num="2"]{color:#27945c}.mine-cell[data-num="3"]{color:#d94c4c}.mine-cell[data-num="4"]{color:#7049bb}
 .rps-score{display:flex;justify-content:space-around;margin:16px 0;color:#c4cee0}.rps-score b{display:block;color:white;font-size:26px}.rps-choices{display:flex;justify-content:center;gap:12px;margin:22px 0}.rps-choices button{font-size:34px;min-width:88px;padding:14px 10px}.rps-choices small{display:block;font-size:12px;margin-top:6px}
 .tetris-wrap{max-width:340px}.tetris-score{color:#c4cee0;margin:8px}.tetris-score b{color:white;font-size:20px}.tetris-wrap canvas{display:block;width:min(100%,300px);height:auto;margin:0 auto;border:1px solid #ffffff30;border-radius:10px;touch-action:pan-y}
+
+
+/* 3D Blok Dünyası */
+.art-voxel{background:linear-gradient(145deg,#70b85b,#245b50 60%,#182e45)}
+.voxel-wrap{max-width:900px;margin:0 auto;color:#eef2ff}
+.voxel-hud{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#c8d5e7;font-size:12px;margin-bottom:10px}
+.voxel-hud span:first-child{font-weight:800;color:#fff}
+.voxel-stage{height:min(62vh,540px);min-height:340px;position:relative;overflow:hidden;border:1px solid #ffffff30;border-radius:13px;background:#8bc9ef}
+.voxel-stage canvas{display:block;width:100%;height:100%;cursor:crosshair}
+.voxel-crosshair{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:white;text-shadow:0 1px 4px #000;pointer-events:none}
+.voxel-start{position:absolute;z-index:3;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#091323a8;backdrop-filter:blur(3px);padding:20px}
+.voxel-start h3{font-size:28px;margin:0 0 8px}.voxel-start p{color:#e0e8f4}
+.voxel-tools{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0}
+.voxel-tools span{font-size:12px;color:#c4cee0}
+.voxel-tools button{border:1px solid #ffffff25;background:#293955;color:#fff;border-radius:9px;padding:8px 11px;cursor:pointer}
+.voxel-tools button.selected{border-color:#9b8cff;background:#51468f}
+.voxel-tip{text-align:center;color:#aebbd2;font-size:11px}
+@media(max-width:600px){.voxel-stage{height:55vh;min-height:300px}.voxel-hud{font-size:10px}}

@@ -23,3 +23,6 @@ OYUN KONTROLLERİ
 - Oyun ve site tamamen tarayıcıda çalışır; sunucu veya ücretli hizmet gerektirmez.
 
 Yeni sürüm: Yılan Oyunu eklendi. Oyun içi yön tuşları/WASD ve mobil dokunmatik kontroller desteklenir.
+
+
+Yeni oyun: Blok Dünyası (3D voxel sandbox). Three.js motoru jsDelivr üzerinden yüklenir; oyun için internet bağlantısı gerekir. Bilgisayarda WASD, fare ve Space tuşlarıyla oynanır.

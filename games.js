@@ -395,3 +395,86 @@ function renderTetris(area){
  document.addEventListener('keydown',key);area.querySelector('#tetrisStart').onclick=start;
  const obs=new MutationObserver(()=>{if(!area.isConnected||!area.querySelector('#tetrisCanvas')){cancelAnimationFrame(raf);document.removeEventListener('keydown',key);obs.disconnect()}});obs.observe(area,{childList:true,subtree:true});start();
 }
+
+
+// 3D Blok Dünyası — Three.js tabanlı özgün voxel sandbox
+function renderVoxel(area) {
+  area.innerHTML = `<div class="voxel-wrap">
+    <div class="voxel-hud"><span id="voxelStatus">Dünya hazırlanıyor...</span><span>WASD: hareket · Space: zıpla · Sol tık: kır · Sağ tık: koy</span></div>
+    <div class="voxel-stage" id="voxelStage"><div class="voxel-crosshair">+</div><div class="voxel-start" id="voxelStart"><h3>Blok Dünyası</h3><p>3 boyutlu dünyayı keşfet ve kendi yapını kur.</p><button id="voxelPlay" class="game-action">Dünyaya gir</button></div></div>
+    <div class="voxel-tools"><span>Blok seç:</span><button data-block="grass" class="selected">🟩 Çimen</button><button data-block="dirt">🟫 Toprak</button><button data-block="stone">⬜ Taş</button><button data-block="wood">🪵 Odun</button><button data-block="leaves">🌿 Yaprak</button></div>
+    <p class="voxel-tip">Bilgisayarda en iyi deneyim için tam ekran al. Mobilde ekrana dokunarak kontrol desteklenmez.</p>
+  </div>`;
+  const stage=area.querySelector("#voxelStage"), status=area.querySelector("#voxelStatus");
+  let renderer,scene,camera,raf,active=false,selected="grass",yaw=0,pitch=0,locked=false;
+  const keys={}; const blocks=new Map(); const materials={grass:0x55a447,dirt:0x805334,stone:0x858b91,wood:0x8b5a2b,leaves:0x2d803d};
+  const THREEPromise=import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js");
+  THREEPromise.then(THREE=>{
+    if(!stage.isConnected) return;
+    scene=new THREE.Scene(); scene.background=new THREE.Color(0x8bc9ef); scene.fog=new THREE.Fog(0x8bc9ef,22,65);
+    camera=new THREE.PerspectiveCamera(75,1,0.1,100); camera.position.set(0,4,8);
+    renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; stage.prepend(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xd9efff,0x63734c,2));
+    const sun=new THREE.DirectionalLight(0xfff2d2,2.2); sun.position.set(-12,20,10); sun.castShadow=true; scene.add(sun);
+    const geo=new THREE.BoxGeometry(1,1,1);
+    const mats={}; Object.entries(materials).forEach(([k,c])=>mats[k]=new THREE.MeshLambertMaterial({color:c}));
+    function add(x,y,z,type){
+      const key=`${x},${y},${z}`; if(blocks.has(key)) return;
+      const mesh=new THREE.Mesh(geo,mats[type]||mats.grass); mesh.position.set(x,y,z); mesh.castShadow=true; mesh.receiveShadow=true; mesh.userData={x,y,z,type};
+      scene.add(mesh); blocks.set(key,mesh);
+    }
+    function remove(mesh){const d=mesh.userData;scene.remove(mesh);blocks.delete(`${d.x},${d.y},${d.z}`);}
+    function height(x,z){return Math.floor(1+Math.sin(x*.38)*1.1+Math.cos(z*.31)*.8);}
+    for(let x=-13;x<=13;x++) for(let z=-13;z<=13;z++){
+      const h=height(x,z); add(x,h,z,"grass");
+      for(let y=h-1;y>=Math.max(-2,h-3);y--) add(x,y,z,y===h-1?"dirt":"stone");
+      if(Math.random()<.035 && Math.abs(x)+Math.abs(z)>5){
+        for(let y=h+1;y<=h+3;y++) add(x,y,z,"wood");
+        for(let dx=-2;dx<=2;dx++) for(let dz=-2;dz<=2;dz++) for(let dy=2;dy<=4;dy++)
+          if(Math.abs(dx)+Math.abs(dz)+(dy===4?1:0)<5) add(x+dx,h+dy,z+dz,"leaves");
+      }
+    }
+    // Spawn area is flattened and cleared
+    for(let x=-2;x<=2;x++) for(let z=-2;z<=2;z++){const h=height(x,z); for(let y=h+1;y<=h+5;y++){const ob=blocks.get(`${x},${y},${z}`);if(ob)remove(ob);}}
+    camera.position.set(0,height(0,5)+3,7);
+    const ray=new THREE.Raycaster(); const center=new THREE.Vector2(0,0);
+    function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+    resize(); const ro=new ResizeObserver(resize);ro.observe(stage);
+    function look(e){if(!locked)return;yaw-=e.movementX*.002;pitch-=e.movementY*.002;pitch=Math.max(-1.45,Math.min(1.45,pitch));camera.rotation.set(pitch,yaw,0,"YXZ");}
+    renderer.domElement.addEventListener("click",()=>{if(active)renderer.domElement.requestPointerLock?.();});
+    document.addEventListener("pointerlockchange",()=>{locked=document.pointerLockElement===renderer.domElement;});
+    document.addEventListener("mousemove",look);
+    renderer.domElement.addEventListener("contextmenu",e=>e.preventDefault());
+    renderer.domElement.addEventListener("mousedown",e=>{
+      if(!active||!locked)return; ray.setFromCamera(center,camera); const hits=ray.intersectObjects([...blocks.values()]);
+      if(!hits.length||hits[0].distance>6)return; const hit=hits[0],d=hit.object.userData;
+      if(e.button===0){if(d.y<=-2)return;remove(hit.object);status.textContent="Blok kırıldı";}
+      if(e.button===2){const n=hit.face.normal;const x=d.x+Math.round(n.x),y=d.y+Math.round(n.y),z=d.z+Math.round(n.z);
+        if(Math.abs(x-camera.position.x)<1&&Math.abs(z-camera.position.z)<1&&Math.abs(y-camera.position.y)<2)return;
+        add(x,y,z,selected);status.textContent="Blok yerleştirildi";}
+    });
+    function keydown(e){keys[e.code]=true;if(["Space","ArrowUp","ArrowDown"].includes(e.code))e.preventDefault();}
+    function keyup(e){keys[e.code]=false;}
+    window.addEventListener("keydown",keydown);window.addEventListener("keyup",keyup);
+    let vy=0,onGround=false;
+    function loop(){
+      if(!stage.isConnected){cancelAnimationFrame(raf);document.removeEventListener("mousemove",look);window.removeEventListener("keydown",keydown);window.removeEventListener("keyup",keyup);ro.disconnect();return;}
+      raf=requestAnimationFrame(loop);
+      if(active){
+        const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+        const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+        const move=new THREE.Vector3();
+        if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);
+        if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);
+        if(move.lengthSq()) {move.normalize().multiplyScalar(.12);camera.position.add(move);}
+        const ground=height(Math.round(camera.position.x),Math.round(-camera.position.z))+1.65;
+        if(keys.Space&&onGround){vy=.19;onGround=false;} vy-=.009;camera.position.y+=vy;
+        if(camera.position.y<ground){camera.position.y=ground;vy=0;onGround=true;}
+      }
+      renderer.render(scene,camera);
+    }
+    loop(); status.textContent="Dünya hazır · 729 blok"; 
+    area.querySelector("#voxelPlay").addEventListener("click",()=>{active=true;area.querySelector("#voxelStart").style.display="none";renderer.domElement.requestPointerLock?.();status.textContent="Keşfetmeye başla!";});
+    area.querySelectorAll("[data-block]").forEach(b=>b.addEventListener("click",()=>{selected=b.dataset.block;area.querySelectorAll("[data-block]").forEach(x=>x.classList.toggle("selected",x===b));}));
+  }).catch(()=>{status.textContent="3D motor yüklenemedi. İnternet bağlantısını kontrol edip tekrar aç.";});
+}
