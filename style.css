@@ -142,3 +142,16 @@ button:focus-visible,a:focus-visible{outline:3px solid #63dfff;outline-offset:3p
 .art-flappy{background:radial-gradient(circle at 50% 45%,#4badd6 0%,#23658f 60%,#17375f 100%)}
 .flappy-wrap{max-width:460px;margin:0 auto}
 .flappy-canvas{display:block;width:min(100%,420px);height:auto;margin:0 auto;border:1px solid #ffffff33;border-radius:14px;box-shadow:0 12px 35px #0005;touch-action:manipulation;cursor:pointer}
+
+
+/* Yeni oyun kartları */
+.art-2048{background:radial-gradient(circle at 50% 45%,#e9a94e 0%,#a85d32 58%,#63364c 100%)}
+.art-pong{background:radial-gradient(circle at 50% 45%,#368d9b 0%,#23546f 58%,#182e50 100%)}
+/* 2048 */
+.game2048-wrap{max-width:430px;margin:0 auto;text-align:center;color:#eef2ff}
+.game2048-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;text-align:left}.game2048-top strong{font-size:30px}.game2048-top p{margin:3px 0;color:#aebbd2;font-size:13px}.game2048-score{background:#273651;padding:9px 13px;border-radius:10px;font-size:12px;color:#c4cee0}.game2048-score b{display:block;font-size:20px;color:#fff}
+.game2048-board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:#273651;padding:9px;border-radius:14px;touch-action:pan-y;user-select:none}.game2048-cell{aspect-ratio:1;display:grid;place-items:center;border-radius:9px;background:#34445f;font-size:clamp(20px,5vw,30px);font-weight:800;color:#283044}.game2048-cell.empty{background:#1c2940}.game2048-cell.v2{background:#eee4da}.game2048-cell.v4{background:#ede0c8}.game2048-cell.v8{background:#f2b179;color:#fff}.game2048-cell.v16{background:#f59563;color:#fff}.game2048-cell.v32{background:#f67c5f;color:#fff}.game2048-cell.v64{background:#f65e3b;color:#fff}.game2048-cell.v128,.game2048-cell.v256{background:#edcf72;color:#fff;font-size:24px}.game2048-cell.v512,.game2048-cell.v1024,.game2048-cell.v2048,.game2048-cell.v4096{background:#edc53f;color:#fff;font-size:20px}
+.game2048-controls{display:flex;flex-direction:column;align-items:center;gap:5px;margin:12px auto 6px}.game2048-controls div{display:flex;gap:5px}.game2048-controls button,.pong-controls button{width:48px;height:38px;border:1px solid #ffffff25;border-radius:9px;background:#293955;color:#fff;font-size:20px;cursor:pointer}.game2048-status,.pong-wrap p{min-height:22px;color:#bac7dc;font-size:13px;margin:8px 0}.game-action{border:0;border-radius:9px;background:#7665ed;color:#fff;padding:10px 18px;font-weight:700;cursor:pointer}
+/* Pong */
+.pong-wrap{max-width:680px;margin:0 auto;text-align:center;color:#eef2ff}.pong-score{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px;font-size:12px;color:#aebbd2}.pong-score b{font-size:22px;color:#fff;margin-left:5px}.pong-wrap canvas{display:block;width:100%;height:auto;border:1px solid #ffffff30;border-radius:12px;touch-action:pan-y}.pong-controls{display:flex;justify-content:center;gap:10px;margin-top:12px}.pong-controls button{width:auto;padding:0 14px;font-size:13px}
+@media(max-width:480px){.game2048-board{gap:6px;padding:7px}.game2048-cell{border-radius:7px}.pong-score{font-size:10px}}

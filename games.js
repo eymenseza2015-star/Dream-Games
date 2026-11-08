@@ -284,3 +284,69 @@ function renderFlappy(area) {
   observer.observe(area,{childList:true,subtree:true});
   draw();
 }
+
+
+// 2048 — ok tuşları, ekrandaki düğmeler veya kaydırma ile oynanır.
+function render2048(area) {
+  area.innerHTML = `
+    <div class="game2048-wrap">
+      <div class="game2048-top"><div><strong>2048</strong><p>Birleştir ve 2048'e ulaş!</p></div><div class="game2048-score">Puan <b id="g2048Score">0</b></div></div>
+      <div class="game2048-board" id="g2048Board" role="grid" aria-label="2048 oyun tahtası"></div>
+      <div class="game2048-controls"><button data-dir="up" aria-label="Yukarı">↑</button><div><button data-dir="left" aria-label="Sola">←</button><button data-dir="down" aria-label="Aşağı">↓</button><button data-dir="right" aria-label="Sağa">→</button></div></div>
+      <p class="game2048-status" id="g2048Status">Ok tuşlarını veya düğmeleri kullan.</p>
+      <button class="game-action" id="g2048New">Yeni oyun</button>
+    </div>`;
+  const boardEl=area.querySelector('#g2048Board'), scoreEl=area.querySelector('#g2048Score'), statusEl=area.querySelector('#g2048Status');
+  let board,score,over=false,won=false;
+  const values=[0,2,4,8,16,32,64,128,256,512,1024,2048,4096];
+  function spawn(){const empty=[];board.forEach((v,i)=>{if(!v)empty.push(i)});if(!empty.length)return;const i=empty[Math.floor(Math.random()*empty.length)];board[i]=Math.random()<.9?2:4;}
+  function draw(){boardEl.innerHTML=board.map(v=>`<div class="game2048-cell ${v?'v'+Math.min(v,4096):'empty'}" role="gridcell">${v||''}</div>`).join('');scoreEl.textContent=score;}
+  function reset(){board=Array(16).fill(0);score=0;over=false;won=false;spawn();spawn();statusEl.textContent='Ok tuşlarını veya düğmeleri kullan.';draw();}
+  function move(dir){if(over)return;const before=board.join(',');let gained=0;
+    for(let n=0;n<4;n++){
+      let ids=[];for(let k=0;k<4;k++){let r,c;if(dir==='left'){r=n;c=k}else if(dir==='right'){r=n;c=3-k}else if(dir==='up'){r=k;c=n}else{r=3-k;c=n}ids.push(r*4+c)}
+      let line=ids.map(i=>board[i]).filter(Boolean),out=[];
+      for(let i=0;i<line.length;i++){if(line[i]===line[i+1]){let v=line[i]*2;out.push(v);gained+=v;i++}else out.push(line[i])}
+      while(out.length<4)out.push(0);ids.forEach((id,i)=>board[id]=out[i]);
+    }
+    if(before===board.join(','))return;score+=gained;spawn();draw();
+    if(!won&&board.includes(2048)){won=true;statusEl.textContent='Harika! 2048 yaptın. Devam edebilirsin!'}
+    if(!board.includes(0)&&!canMove()){over=true;statusEl.textContent='Hamle kalmadı. Yeni oyun başlatabilirsin.'}
+  }
+  function canMove(){for(let r=0;r<4;r++)for(let c=0;c<4;c++){let i=r*4+c;if(c<3&&board[i]===board[i+1]||r<3&&board[i]===board[i+4])return true}return false}
+  function onKey(e){const d={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(d&&area.isConnected){e.preventDefault();move(d)}}
+  function onTouchStart(e){const t=e.changedTouches[0];area._g2048Touch=[t.clientX,t.clientY]}
+  function onTouchEnd(e){if(!area._g2048Touch)return;const t=e.changedTouches[0],dx=t.clientX-area._g2048Touch[0],dy=t.clientY-area._g2048Touch[1];area._g2048Touch=null;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;move(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'))}
+  const keyHandler=e=>onKey(e);document.addEventListener('keydown',keyHandler);
+  area.querySelectorAll('[data-dir]').forEach(b=>b.addEventListener('click',()=>move(b.dataset.dir)));
+  area.querySelector('#g2048New').addEventListener('click',reset);
+  boardEl.addEventListener('touchstart',onTouchStart,{passive:true});boardEl.addEventListener('touchend',onTouchEnd,{passive:true});
+  const obs=new MutationObserver(()=>{if(!area.isConnected||!area.querySelector('#g2048Board')){document.removeEventListener('keydown',keyHandler);obs.disconnect()}});obs.observe(area,{childList:true,subtree:true});
+  reset();
+}
+
+// Pong — oyuncu soldaki raketi W/S veya ok tuşlarıyla kontrol eder.
+function renderPong(area) {
+  area.innerHTML=`<div class="pong-wrap"><div class="pong-score"><span> SEN <b id="pongPlayer">0</b></span><span>İLK 5 KAZANIR</span><span>CPU <b id="pongCpu">0</b></span></div><canvas id="pongCanvas" width="640" height="400" aria-label="Pong oyun alanı"></canvas><div class="pong-controls"><button data-pong="up">▲ Yukarı</button><button data-pong="down">▼ Aşağı</button></div><p id="pongStatus">W / S veya ok tuşlarıyla raketi hareket ettir.</p><button class="game-action" id="pongRestart">Yeniden başlat</button></div>`;
+  const canvas=area.querySelector('#pongCanvas'),ctx=canvas.getContext('2d'),pScore=area.querySelector('#pongPlayer'),cScore=area.querySelector('#pongCpu'),status=area.querySelector('#pongStatus');
+  let py=160,cy=160,bx=320,by=200,vx=4,vy=2.2,ps=0,cs=0,playing=true,raf=0,held={};
+  const paddleH=82,paddleW=12,ball=9;
+  function resetBall(dir){bx=320;by=200;vx=4*(dir|| (Math.random()>.5?1:-1));vy=(Math.random()-.5)*5;}
+  function draw(){ctx.fillStyle='#101b31';ctx.fillRect(0,0,640,400);ctx.setLineDash([10,12]);ctx.strokeStyle='#ffffff55';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(320,0);ctx.lineTo(320,400);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#8c7bff';ctx.fillRect(24,py,paddleW,paddleH);ctx.fillStyle='#39c6d5';ctx.fillRect(604,cy,paddleW,paddleH);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx,by,ball,0,Math.PI*2);ctx.fill();}
+  function loop(){if(!playing)return; if(held.ArrowUp||held.KeyW)py-=6;if(held.ArrowDown||held.KeyS)py+=6;py=Math.max(0,Math.min(400-paddleH,py));
+    cy+=(by-(cy+paddleH/2))*.075;cy=Math.max(0,Math.min(400-paddleH,cy));bx+=vx;by+=vy;
+    if(by<ball||by>400-ball)vy*=-1;
+    if(vx<0&&bx-ball<36&&bx-ball>20&&by>py-ball&&by<py+paddleH+ball){vx=Math.abs(vx)*1.05;vy+=((by-(py+paddleH/2))/35)}
+    if(vx>0&&bx+ball>604&&bx+ball<620&&by>cy-ball&&by<cy+paddleH+ball){vx=-Math.abs(vx)*1.05;vy+=((by-(cy+paddleH/2))/35)}
+    if(bx<0){cs++;cScore.textContent=cs;resetBall(1)}if(bx>640){ps++;pScore.textContent=ps;resetBall(-1)}
+    if(ps>=5||cs>=5){playing=false;status.textContent=ps>=5?'Kazandın! Tebrikler!':'CPU kazandı. Bir kez daha dene!';draw();return}draw();raf=requestAnimationFrame(loop);
+  }
+  function start(){cancelAnimationFrame(raf);py=cy=160;ps=cs=0;pScore.textContent='0';cScore.textContent='0';playing=true;held={};resetBall();status.textContent='W / S veya ok tuşlarıyla raketi hareket ettir.';draw();raf=requestAnimationFrame(loop)}
+  function keydown(e){if(['ArrowUp','ArrowDown',' '].includes(e.key))e.preventDefault();held[e.code]=true}function keyup(e){held[e.code]=false}
+  function press(e){held[e.currentTarget.dataset.pong==='up'?'ArrowUp':'ArrowDown']=true}function release(e){held[e.currentTarget.dataset.pong==='up'?'ArrowUp':'ArrowDown']=false}
+  document.addEventListener('keydown',keydown);document.addEventListener('keyup',keyup);
+  area.querySelectorAll('[data-pong]').forEach(b=>{b.addEventListener('pointerdown',press);b.addEventListener('pointerup',release);b.addEventListener('pointerleave',release);b.addEventListener('pointercancel',release)});
+  area.querySelector('#pongRestart').addEventListener('click',start);
+  const obs=new MutationObserver(()=>{if(!area.isConnected||!area.querySelector('#pongCanvas')){cancelAnimationFrame(raf);document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);obs.disconnect()}});obs.observe(area,{childList:true,subtree:true});
+  start();
+}
