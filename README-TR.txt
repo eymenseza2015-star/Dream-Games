@@ -26,3 +26,5 @@ Yeni sürüm: Yılan Oyunu eklendi. Oyun içi yön tuşları/WASD ve mobil dokun
 
 
 Yeni oyun: Blok Dünyası (3D voxel sandbox). Three.js motoru jsDelivr üzerinden yüklenir; oyun için internet bağlantısı gerekir. Bilgisayarda WASD, fare ve Space tuşlarıyla oynanır.
+
+Blok Dünyası hayatta kalma güncellemesi: hayvanlar, envanter, üretim, yemek pişirme, can ve açlık sistemleri eklendi. E tuşu envanter menüsünü açar.
