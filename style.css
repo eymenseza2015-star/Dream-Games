@@ -155,3 +155,18 @@ button:focus-visible,a:focus-visible{outline:3px solid #63dfff;outline-offset:3p
 /* Pong */
 .pong-wrap{max-width:680px;margin:0 auto;text-align:center;color:#eef2ff}.pong-score{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px;font-size:12px;color:#aebbd2}.pong-score b{font-size:22px;color:#fff;margin-left:5px}.pong-wrap canvas{display:block;width:100%;height:auto;border:1px solid #ffffff30;border-radius:12px;touch-action:pan-y}.pong-controls{display:flex;justify-content:center;gap:10px;margin-top:12px}.pong-controls button{width:auto;padding:0 14px;font-size:13px}
 @media(max-width:480px){.game2048-board{gap:6px;padding:7px}.game2048-cell{border-radius:7px}.pong-score{font-size:10px}}
+
+
+/* Mayın Tarlası, Taş-Kâğıt-Makas ve Tetris */
+.art-mines{background:radial-gradient(circle at 50% 45%,#b85c64,#713c63 60%,#292b50)}
+.art-rps{background:radial-gradient(circle at 50% 45%,#4e9b9c,#285d75 60%,#1c3151)}
+.art-tetris{background:radial-gradient(circle at 50% 45%,#8c70df,#594e9b 60%,#292b50)}
+.newgame-wrap{max-width:480px;margin:0 auto;text-align:center;color:#eef2ff}
+.newgame-status{color:#c4cee0;font-size:13px;min-height:22px;margin:10px 0}
+.newgame-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.newgame-actions button,.rps-choices button{border:1px solid #ffffff25;background:#293955;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+.mine-board{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;max-width:360px;margin:12px auto}
+.mine-cell{aspect-ratio:1;min-width:0;border:1px solid #ffffff20;border-radius:5px;background:#34445f;color:#fff;font-weight:800;font-size:clamp(12px,3vw,18px);cursor:pointer}
+.mine-cell.revealed{background:#dce5ef;color:#25334a;cursor:default}.mine-cell[data-num="1"]{color:#2673d9}.mine-cell[data-num="2"]{color:#27945c}.mine-cell[data-num="3"]{color:#d94c4c}.mine-cell[data-num="4"]{color:#7049bb}
+.rps-score{display:flex;justify-content:space-around;margin:16px 0;color:#c4cee0}.rps-score b{display:block;color:white;font-size:26px}.rps-choices{display:flex;justify-content:center;gap:12px;margin:22px 0}.rps-choices button{font-size:34px;min-width:88px;padding:14px 10px}.rps-choices small{display:block;font-size:12px;margin-top:6px}
+.tetris-wrap{max-width:340px}.tetris-score{color:#c4cee0;margin:8px}.tetris-score b{color:white;font-size:20px}.tetris-wrap canvas{display:block;width:min(100%,300px);height:auto;margin:0 auto;border:1px solid #ffffff30;border-radius:10px;touch-action:pan-y}

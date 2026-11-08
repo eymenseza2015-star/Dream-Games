@@ -350,3 +350,48 @@ function renderPong(area) {
   const obs=new MutationObserver(()=>{if(!area.isConnected||!area.querySelector('#pongCanvas')){cancelAnimationFrame(raf);document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);obs.disconnect()}});obs.observe(area,{childList:true,subtree:true});
   start();
 }
+
+
+// Mayın Tarlası
+function renderMines(area){
+  const N=9,BOMBS=10;let board=[],revealed=[],flags=[],started=false,ended=false,flagMode=false;
+  area.innerHTML=`<div class="newgame-wrap"><p class="newgame-status" id="mineStatus">10 mayını bul. İlk açtığın kare güvenlidir.</p><div class="newgame-actions"><button id="mineFlag">🚩 Bayrak modu: Kapalı</button><button id="mineReset">Yeniden başlat</button></div><div class="mine-board" id="mineBoard"></div></div>`;
+  const el=area.querySelector('#mineBoard'),st=area.querySelector('#mineStatus'),fb=area.querySelector('#mineFlag');
+  function setup(){board=Array(N*N).fill(0);revealed=[];flags=[];started=false;ended=false;flagMode=false;fb.textContent='🚩 Bayrak modu: Kapalı';st.textContent='10 mayını bul. İlk açtığın kare güvenlidir.';draw()}
+  function plant(safe){let ids=Array.from({length:N*N},(_,i)=>i).filter(i=>i!==safe).sort(()=>Math.random()-.5).slice(0,BOMBS);ids.forEach(i=>board[i]=-1);for(let i=0;i<N*N;i++)if(board[i]!==-1){let r=Math.floor(i/N),c=i%N;board[i]=neighbors(r,c).filter(j=>board[j]===-1).length}}
+  function neighbors(r,c){let a=[];for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++){let rr=r+y,cc=c+x;if((x||y)&&rr>=0&&rr<N&&cc>=0&&cc<N)a.push(rr*N+cc)}return a}
+  function draw(){el.innerHTML='';for(let i=0;i<N*N;i++){let b=document.createElement('button');b.className='mine-cell'+(revealed.includes(i)?' revealed':'');b.textContent=flags.includes(i)?'🚩':revealed.includes(i)?(board[i]===-1?'💣':board[i]||''):'';if(revealed.includes(i)&&board[i]>0)b.dataset.num=board[i];b.disabled=ended||revealed.includes(i);b.addEventListener('click',()=>act(i));b.addEventListener('contextmenu',e=>{e.preventDefault();toggleFlag(i)});el.appendChild(b)}}
+  function toggleFlag(i){if(ended||revealed.includes(i))return;flags=flags.includes(i)?flags.filter(x=>x!==i):[...flags,i];draw();st.textContent=`Bayrak: ${flags.length}/10`}
+  function open(i){if(revealed.includes(i)||flags.includes(i))return;revealed.push(i);if(board[i]===0)neighbors(Math.floor(i/N),i%N).forEach(j=>{if(!revealed.includes(j)&&board[j]!==-1)open(j)})}
+  function act(i){if(ended)return;if(flagMode){toggleFlag(i);return}if(!started){plant(i);started=true}if(board[i]===-1){revealed.push(i);ended=true;st.textContent='Mayına bastın! Yeniden deneyebilirsin.';board.forEach((v,j)=>{if(v===-1&&!revealed.includes(j))revealed.push(j)})}else{open(i);if(revealed.length===N*N-BOMBS){ended=true;st.textContent='Tebrikler! Bütün güvenli kareleri açtın.'}else st.textContent=`Açılan kare: ${revealed.length} · Bayrak: ${flags.length}/10`}draw()}
+  fb.onclick=()=>{flagMode=!flagMode;fb.textContent=`🚩 Bayrak modu: ${flagMode?'Açık':'Kapalı'}`};area.querySelector('#mineReset').onclick=setup;setup();
+}
+
+// Taş-Kâğıt-Makas
+function renderRPS(area){
+ area.innerHTML=`<div class="newgame-wrap rps-wrap"><p class="newgame-status" id="rpsStatus">Hamleni seç!</p><div class="rps-score"><span>Sen <b id="rpsYou">0</b></span><span>Bilgisayar <b id="rpsCpu">0</b></span></div><div class="rps-choices"><button data-rps="Taş">✊<small>Taş</small></button><button data-rps="Kâğıt">✋<small>Kâğıt</small></button><button data-rps="Makas">✌️<small>Makas</small></button></div><p id="rpsResult" class="newgame-status">İlk 5 puana ulaş!</p><button class="game-action" id="rpsReset">Skoru sıfırla</button></div>`;
+ let you=0,cpu=0;const s=area.querySelector('#rpsStatus'),res=area.querySelector('#rpsResult'),ys=area.querySelector('#rpsYou'),cs=area.querySelector('#rpsCpu');
+ area.querySelectorAll('[data-rps]').forEach(b=>b.onclick=()=>{if(you>=5||cpu>=5)return;let a=b.dataset.rps,opts=['Taş','Kâğıt','Makas'],c=opts[Math.floor(Math.random()*3)];let win=a===c?0:(a==='Taş'&&c==='Makas'||a==='Kâğıt'&&c==='Taş'||a==='Makas'&&c==='Kâğıt'?1:-1);if(win===1)you++;if(win===-1)cpu++;ys.textContent=you;cs.textContent=cpu;res.textContent=`Sen: ${a} · Bilgisayar: ${c} — ${win===0?'Berabere!':win===1?'Bu turu kazandın!':'Bu turu bilgisayar kazandı.'}`;if(you===5||cpu===5)s.textContent=you===5?'Tebrikler, maçı kazandın!':'Bilgisayar maçı kazandı.'});
+ area.querySelector('#rpsReset').onclick=()=>{you=cpu=0;ys.textContent=cs.textContent='0';s.textContent='Hamleni seç!';res.textContent='İlk 5 puana ulaş!'}
+}
+
+// Tetris
+function renderTetris(area){
+ area.innerHTML=`<div class="newgame-wrap tetris-wrap"><p class="newgame-status" id="tetrisStatus">← → hareket · ↑ döndür · ↓ hızlandır · Boşluk: düşür</p><div class="tetris-score">Puan: <b id="tetrisScore">0</b></div><canvas id="tetrisCanvas" width="300" height="600"></canvas><div class="newgame-actions"><button id="tetrisStart">Yeniden başlat</button></div></div>`;
+ const canvas=area.querySelector('#tetrisCanvas'),ctx=canvas.getContext('2d'),scoreEl=area.querySelector('#tetrisScore'),status=area.querySelector('#tetrisStatus');
+ const W=10,H=20,S=30,colors=['','#8c7bff','#39c6d5','#f4b942','#ed6a8b','#65c98c','#e58b48','#a88cf5'];
+ const shapes=[[[1,1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[1,1],[1,1]],[[0,1,1],[1,1,0]],[[0,1,0],[1,1,1]],[[1,1,0],[0,1,1]]];
+ let grid, piece,score,over,drop=0,last=0,raf=0;
+ function newPiece(){let shape=shapes[Math.floor(Math.random()*shapes.length)].map(r=>r.slice());return {shape,x:Math.floor((W-shape[0].length)/2),y:0,color:1+Math.floor(Math.random()*7)}}
+ function collision(p){return p.shape.some((row,y)=>row.some((v,x)=>v&&(p.y+y>=H||p.x+x<0||p.x+x>=W||p.y+y>=0&&grid[p.y+y][p.x+x])))}
+ function merge(){piece.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v&&piece.y+y>=0)grid[piece.y+y][piece.x+x]=piece.color}));let kept=grid.filter(r=>r.some(v=>!v));let n=H-kept.length;while(kept.length<H)kept.unshift(Array(W).fill(0));grid=kept;score+=n*n*100;scoreEl.textContent=score;piece=newPiece();if(collision(piece)){over=true;status.textContent='Oyun bitti! Yeniden başlat.'}}
+ function draw(){ctx.fillStyle='#101b31';ctx.fillRect(0,0,300,600);for(let y=0;y<H;y++)for(let x=0;x<W;x++)cell(x,y,grid[y][x]);if(piece)piece.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v)cell(piece.x+x,piece.y+y,piece.color)}))}
+ function cell(x,y,c){if(!c)return;ctx.fillStyle=colors[c];ctx.fillRect(x*S+1,y*S+1,S-2,S-2);ctx.strokeStyle='#ffffff55';ctx.strokeRect(x*S+2,y*S+2,S-4,S-4)}
+ function rotate(m){return m[0].map((_,i)=>m.map(r=>r[i]).reverse())}
+ function move(dx,dy){if(over)return;let p={...piece,x:piece.x+dx,y:piece.y+dy};if(!collision(p)){piece=p;return true}if(dy===1)merge();return false}
+ function key(e){if(!area.isConnected||over)return;let handled=true;if(e.key==='ArrowLeft')move(-1,0);else if(e.key==='ArrowRight')move(1,0);else if(e.key==='ArrowDown')move(0,1);else if(e.key==='ArrowUp'){let p={...piece,shape:rotate(piece.shape)};if(!collision(p))piece=p}else if(e.code==='Space'){while(move(0,1)){} }else handled=false;if(handled){e.preventDefault();draw()}}
+ function loop(t){if(!area.isConnected)return;if(!over){let d=t-last;last=t;drop+=d;if(drop>650){move(0,1);drop=0}draw();raf=requestAnimationFrame(loop)}}
+ function start(){cancelAnimationFrame(raf);grid=Array.from({length:H},()=>Array(W).fill(0));score=0;over=false;drop=0;last=0;scoreEl.textContent='0';status.textContent='← → hareket · ↑ döndür · ↓ hızlandır · Boşluk: düşür';piece=newPiece();draw();raf=requestAnimationFrame(loop)}
+ document.addEventListener('keydown',key);area.querySelector('#tetrisStart').onclick=start;
+ const obs=new MutationObserver(()=>{if(!area.isConnected||!area.querySelector('#tetrisCanvas')){cancelAnimationFrame(raf);document.removeEventListener('keydown',key);obs.disconnect()}});obs.observe(area,{childList:true,subtree:true});start();
+}

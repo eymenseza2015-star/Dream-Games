@@ -12,6 +12,9 @@ document.querySelectorAll("[data-game]").forEach(button => {
     if (game === "flappy") { modalTitle.textContent = "Uçan Kuş"; renderFlappy(gameArea); }
     if (game === "2048") { modalTitle.textContent = "2048"; render2048(gameArea); }
     if (game === "pong") { modalTitle.textContent = "Pong"; renderPong(gameArea); }
+    if (game === "mines") { modalTitle.textContent = "Mayın Tarlası"; renderMines(gameArea); }
+    if (game === "rps") { modalTitle.textContent = "Taş-Kâğıt-Makas"; renderRPS(gameArea); }
+    if (game === "tetris") { modalTitle.textContent = "Tetris"; renderTetris(gameArea); }
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.getElementById("closeModal").focus();
   });
 });
