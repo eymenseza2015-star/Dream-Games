@@ -436,13 +436,13 @@ function renderVoxel(area) {
     }
     // Spawn area is flattened and cleared
     for(let x=-2;x<=2;x++) for(let z=-2;z<=2;z++){const h=height(x,z); for(let y=h+1;y<=h+5;y++){const ob=blocks.get(`${x},${y},${z}`);if(ob)remove(ob);}}
-    camera.position.set(0,height(0,5)+2.1,7);
+    camera.position.set(0,height(0,0)+2.1,0);
     const ray=new THREE.Raycaster(); const center=new THREE.Vector2(0,0);
     function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
     resize(); const ro=new ResizeObserver(resize);ro.observe(stage);
     function look(e){if(!locked)return;yaw-=e.movementX*.002;pitch-=e.movementY*.002;pitch=Math.max(-1.45,Math.min(1.45,pitch));camera.rotation.set(pitch,yaw,0,"YXZ");}
     renderer.domElement.addEventListener("click",()=>{if(active)renderer.domElement.requestPointerLock?.();});
-    document.addEventListener("pointerlockchange",()=>{locked=document.pointerLockElement===renderer.domElement;});
+    document.addEventListener("pointerlockchange",()=>{locked=document.pointerLockElement===renderer.domElement;if(!locked){for(const k in keys)keys[k]=false;}});
     document.addEventListener("mousemove",look);
     renderer.domElement.addEventListener("contextmenu",e=>e.preventDefault());
     renderer.domElement.addEventListener("mousedown",e=>{
@@ -455,7 +455,7 @@ function renderVoxel(area) {
     });
     function keydown(e){keys[e.code]=true;if(["Space","ArrowUp","ArrowDown"].includes(e.code))e.preventDefault();}
     function keyup(e){keys[e.code]=false;}
-    window.addEventListener("keydown",keydown);window.addEventListener("keyup",keyup);
+    document.addEventListener("keydown",keydown);document.addEventListener("keyup",keyup);
     let vy=0,onGround=false;
     const playerRadius=.29, playerHeight=1.8, eyeHeight=1.6;
     // Oyuncunun ayak-gövde kutusunun bloklarla çarpışmasını denetle.
@@ -472,7 +472,7 @@ function renderVoxel(area) {
       return false;
     }
     function loop(){
-      if(!stage.isConnected){cancelAnimationFrame(raf);document.removeEventListener("mousemove",look);window.removeEventListener("keydown",keydown);window.removeEventListener("keyup",keyup);ro.disconnect();return;}
+      if(!stage.isConnected){cancelAnimationFrame(raf);document.removeEventListener("mousemove",look);document.removeEventListener("keydown",keydown);document.removeEventListener("keyup",keyup);ro.disconnect();return;}
       raf=requestAnimationFrame(loop);
       if(active){
         const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
