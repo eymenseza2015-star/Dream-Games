@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ücretsiz tarayıcı oyunları ve bağımsız oyun koleksiyonu.">
+  <title>OyunKutusu — Ücretsiz Tarayıcı Oyunları</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">O</span> OyunKutusu</a>
+    <nav aria-label="Ana menü">
+      <a href="#oyunlar">Oyunlar</a>
+      <a href="#hakkinda">Hakkında</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">ÜCRETSİZ TARAYICI OYUNLARI</p>
+      <h1>Oyna. Keşfet. <span>Eğlen.</span></h1>
+      <p class="hero-copy">İndirme yok, üyelik yok. Sevdiğin oyunu seç ve hemen oynamaya başla.</p>
+      <a class="primary-button" href="#oyunlar">Oyunları keşfet <span aria-hidden="true">→</span></a>
+    </section>
+
+    <section id="oyunlar" class="games-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">OYUN KÜTÜPHANESİ</p>
+          <h2>Oyunlar</h2>
+        </div>
+        <span class="game-count">Şu an 2 oyun</span>
+      </div>
+
+      <div class="game-grid">
+        <article class="game-card">
+          <div class="game-art art-memory"><span>🧠</span></div>
+          <div class="game-info">
+            <div><span class="tag">Hafıza</span><span class="tag">Tek oyuncu</span></div>
+            <h3>Hafıza Eşleştirme</h3>
+            <p>Kapalı kartları aç, aynı sembolleri bul ve en az hamleyle tamamla.</p>
+            <button class="play-button" data-game="memory">Oyunu oyna <span>→</span></button>
+          </div>
+        </article>
+
+        <article class="game-card">
+          <div class="game-art art-tictactoe"><span>✕ <i>○</i></span></div>
+          <div class="game-info">
+            <div><span class="tag">Zekâ</span><span class="tag">2 oyuncu</span></div>
+            <h3>XOX</h3>
+            <p>Arkadaşınla sırayla oyna. Yatay, dikey veya çapraz üçlü yap!</p>
+            <button class="play-button" data-game="tictactoe">Oyunu oyna <span>→</span></button>
+          </div>
+        </article>
+      </div>
+
+      <div class="add-note">
+        <div class="add-icon">＋</div>
+        <div>
+          <h3>Yeni oyunlar yolda</h3>
+          <p>Kendi yaptığın oyunları veya izin verilen HTML5 oyunlarını buraya ekleyebiliriz.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="hakkinda" class="about-section">
+      <p class="eyebrow">BİZİM PLATFORMUMUZ</p>
+      <h2>Küçük başla, birlikte geliştir.</h2>
+      <p>OyunKutusu bağımsız bir oyun alanı. Yeni oyunlar ekledikçe kütüphanemiz büyüyecek.</p>
+    </section>
+  </main>
+
+  <footer>
+    <span>© <span id="year"></span> OyunKutusu</span>
+    <span>Ücretsiz oyun keyfi.</span>
+  </footer>
+
+  <div class="modal" id="gameModal" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div><p class="eyebrow">ŞİMDİ OYNA</p><h2 id="modalTitle">Oyun</h2></div>
+        <button class="close-button" id="closeModal" aria-label="Oyunu kapat">✕</button>
+      </div>
+      <div id="gameArea" class="game-area"></div>
+    </div>
+  </div>
+  <script src="games.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
