@@ -208,3 +208,9 @@ button:focus-visible,a:focus-visible{outline:3px solid #63dfff;outline-offset:3p
 .parkour-touch button{border:1px solid #ffffff40;background:#293955d9;color:#fff;border-radius:12px;width:45px;height:43px;font-size:18px;font-weight:800;touch-action:none}
 .parkour-touch .pk-jump{width:78px;height:58px;border-radius:50%;background:#6554b8;font-size:12px}
 @media(max-width:700px){.parkour-stage{height:54vh;min-height:300px}.parkour-touch{display:flex}.parkour-bottom>span{max-width:65%}}
+
+
+/* Parkur bölüm ilerleme kontrolleri */
+.pk-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#pkNext{background:linear-gradient(135deg,#7657df,#4f39a8);color:#fff;border:0}
+@media(max-width:600px){.pk-actions{width:100%;justify-content:center}.pk-actions button{flex:1}}

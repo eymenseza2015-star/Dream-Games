@@ -604,7 +604,7 @@ async function renderParkour(area) {
   area.innerHTML = `
     <div class="parkour-shell">
       <div class="parkour-hud">
-        <div><strong id="pkLevel">BÖLÜM 1</strong><span id="pkCheckpoint">Başlangıç</span></div>
+        <div><strong id="pkLevel">BÖLÜM 1 / 5</strong><span id="pkCheckpoint">Başlangıç</span></div>
         <div class="parkour-stats"><span id="pkTime">Süre: 0.0 sn</span><span id="pkFalls">Düşüş: 0</span><span id="pkCoins">🪙 0 / 20</span></div>
       </div>
       <div class="parkour-stage" id="parkourStage">
@@ -613,7 +613,7 @@ async function renderParkour(area) {
       </div>
       <div class="parkour-bottom">
         <span>WASD: Hareket · SPACE: Zıpla · Fare: Kamerayı döndür</span>
-        <button class="secondary-button" id="pkRestart">Baştan başla</button>
+        <div class="pk-actions"><button class="secondary-button" id="pkNext" style="display:none">Sonraki bölüm →</button><button class="secondary-button" id="pkRestart">Baştan başla</button></div>
       </div>
       <div class="parkour-touch">
         <div class="pk-dpad"><button data-pk="forward">▲</button><div><button data-pk="left">◀</button><button data-pk="back">▼</button><button data-pk="right">▶</button></div></div>
@@ -626,6 +626,8 @@ async function renderParkour(area) {
   const fallsEl = area.querySelector("#pkFalls");
   const coinsEl = area.querySelector("#pkCoins");
   const checkpointEl = area.querySelector("#pkCheckpoint");
+  const levelEl = area.querySelector("#pkLevel");
+  const nextBtn = area.querySelector("#pkNext");
   const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js");
   if (!area.isConnected) return;
 
@@ -721,6 +723,48 @@ async function renderParkour(area) {
     piece.position.set(x,y,0); goal.add(piece);
   }
 
+  // Beş ayrı parkur düzeni: her bölümde platform yerleşimi ve zorluk artar.
+  const levelLayouts = [
+    [[0,0,3],[0,0,-7],[-4,1,-15],[2,2,-23],[7,2,-31],[2,3,-40],[-4,4,-49],[2,5,-58],[7,5,-67],[0,6,-77]],
+    [[0,0,3],[4,0,-6],[-2,1,-14],[5,2,-22],[-3,2,-30],[3,3,-39],[7,4,-48],[0,5,-57],[-5,5,-66],[0,6,-77]],
+    [[0,0,3],[-4,0,-6],[2,1,-14],[-5,2,-22],[3,3,-30],[-3,3,-39],[5,4,-48],[-2,5,-57],[4,6,-66],[0,7,-77]],
+    [[0,0,3],[4,1,-6],[-3,2,-14],[4,3,-22],[-4,4,-30],[3,5,-39],[-5,6,-48],[2,7,-57],[6,8,-66],[0,9,-77]],
+    [[0,0,3],[-4,1,-6],[4,2,-14],[-5,3,-22],[5,4,-30],[-4,5,-39],[5,6,-48],[-3,7,-57],[4,8,-66],[0,10,-77]]
+  ];
+  const movingPatterns = [[4,6],[3,5,7],[2,4,6,8],[1,3,5,7],[1,2,4,6,8]];
+  let currentLevel = 0;
+  function applyLevel(index){
+    currentLevel = index;
+    const layout = levelLayouts[index];
+    platforms.forEach((p,i)=>{
+      const [x,y,z] = layout[i];
+      p.x=x; p.y=y; p.z=z; p.baseX=x;
+      p.mesh.position.set(x,y,z);
+      p.moving = movingPatterns[index].includes(i);
+    });
+    coins.forEach((c,i)=>{
+      const platformIndex = Math.floor(i/2);
+      const [x,y,z] = layout[platformIndex];
+      const offset = i%2===0 ? -0.65 : 0.65;
+      c.mesh.position.set(x+offset,y+1.15,z);
+      c.baseY=y+1.15;
+      c.collected=false; c.mesh.visible=true;
+    });
+    coinCount=0; updateCoinHud();
+    spinner.position.set(layout[4][0],layout[4][1]+1.05,layout[4][2]);
+    goal.position.set(layout[9][0],layout[9][1],layout[9][2]);
+    levelEl.textContent="BÖLÜM "+(index+1)+" / 5";
+    checkpoint={x:layout[0][0],y:layout[0][1],z:layout[0][2]};
+    checkpointEl.textContent="Başlangıç";
+    cp1Reached=false; cp2Reached=false;
+    nextBtn.style.display="none";
+    player.position.set(layout[0][0],layout[0][1],layout[0][2]);
+    velocityY=0; falls=0; fallsEl.textContent="Düşüş: 0";
+    startTime=performance.now(); won=false; active=true;
+    setMessage("Bölüm "+(index+1)+" başladı! Hedefe ulaş ve 20 altını topla.",true);
+    setTimeout(()=>setMessage("",false),1800);
+  }
+
   // Basit, özgün blok karakter
   const player = new THREE.Group(); scene.add(player);
   const skin=mat(0xf1bd91), shirt=mat(0x375fbd), pants=mat(0x28364f), shoe=mat(0x202633);
@@ -737,6 +781,7 @@ async function renderParkour(area) {
   cube(leftArm,0.23,0.78,0.27,shirt,0,-0.36,0); cube(rightArm,0.23,0.78,0.27,shirt,0,-0.36,0);
   player.position.set(0,0,3);
 
+  let cp1Reached=false, cp2Reached=false;
   const keys={}; let yaw=0, pitch=0.16, velocityY=0, grounded=false, active=true, won=false;
   let checkpoint={x:0,y:0,z:3}, falls=0, startTime=performance.now(), last=performance.now(), walk=0;
   const moveSpeed=7.2, playerRadius=0.38, playerHeight=2.35;
@@ -752,13 +797,15 @@ async function renderParkour(area) {
     falls++; fallsEl.textContent="Düşüş: "+falls;
   }
   function restart(){
-    checkpoint={x:0,y:0,z:3}; checkpointEl.textContent="Başlangıç";
-    falls=0; fallsEl.textContent="Düşüş: 0"; startTime=performance.now(); won=false;
-    coinCount=0; coins.forEach(c=>{c.collected=false;c.mesh.visible=true;}); updateCoinHud();
-    player.position.set(0,0,3); velocityY=0; active=true;
+    applyLevel(0);
     setMessage("Hadi başlayalım!",true); setTimeout(()=>setMessage("",false),1000);
   }
+  function nextLevel(){
+    if(currentLevel<4) applyLevel(currentLevel+1);
+  }
   area.querySelector("#pkRestart").addEventListener("click",restart);
+  nextBtn.addEventListener("click",nextLevel);
+  applyLevel(0);
   // Mouse sürükleme ile kamera; pointer lock gerektirmez.
   let dragging=false,lastX=0,lastY=0;
   renderer.domElement.addEventListener("pointerdown",e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId);});
@@ -835,15 +882,25 @@ async function renderParkour(area) {
     const dxs=player.position.x-spinner.position.x,dzs=player.position.z-spinner.position.z;
     if(Math.abs(dxs)<3.2&&Math.abs(dzs)<0.6&&Math.abs(player.position.y-spinner.position.y)<1.8)velocityY=Math.min(velocityY,-5);
     // Kontrol noktaları
-    if(Math.abs(player.position.x+4)<2.2&&Math.abs(player.position.z+15)<2.2&&checkpoint.z>-15){
-      checkpoint={x:-4,y:1,z:-15};checkpointEl.textContent="Kontrol noktası 1";setMessage("Kontrol noktası kaydedildi!",true);setTimeout(()=>setMessage("",false),1200);
+    const cpA=levelLayouts[currentLevel][2], cpB=levelLayouts[currentLevel][6];
+    if(!cp1Reached&&Math.abs(player.position.x-cpA[0])<2.2&&Math.abs(player.position.z-cpA[2])<2.2){
+      cp1Reached=true;checkpoint={x:cpA[0],y:cpA[1],z:cpA[2]};checkpointEl.textContent="Kontrol noktası 1";
+      setMessage("Kontrol noktası kaydedildi!",true);setTimeout(()=>setMessage("",false),1200);
     }
-    if(Math.abs(player.position.x+4)<2.2&&Math.abs(player.position.z+49)<2.2&&checkpoint.z>-49){
-      checkpoint={x:-4,y:4,z:-49};checkpointEl.textContent="Kontrol noktası 2";setMessage("Kontrol noktası kaydedildi!",true);setTimeout(()=>setMessage("",false),1200);
+    if(!cp2Reached&&Math.abs(player.position.x-cpB[0])<2.2&&Math.abs(player.position.z-cpB[2])<2.2){
+      cp2Reached=true;checkpoint={x:cpB[0],y:cpB[1],z:cpB[2]};checkpointEl.textContent="Kontrol noktası 2";
+      setMessage("Kontrol noktası kaydedildi!",true);setTimeout(()=>setMessage("",false),1200);
     }
     if(player.position.y < -4.1)respawn();
-    if(player.position.z < -74&&Math.abs(player.position.x)<4&&player.position.y>5.2&&!won){
-      won=true;active=false;setMessage("BÖLÜM TAMAMLANDI! 🎉 "+coinCount+"/"+coins.length+" altın topladın. Baştan başlamak için butona bas.",true);
+    if(player.position.z < goal.position.z+3&&Math.abs(player.position.x-goal.position.x)<4&&player.position.y>goal.position.y-0.8&&!won){
+      won=true;active=false;
+      if(currentLevel<4){
+        setMessage("BÖLÜM "+(currentLevel+1)+" TAMAMLANDI! 🎉 "+coinCount+"/"+coins.length+" altın topladın. Sonraki bölüme geçebilirsin.",true);
+        nextBtn.style.display="inline-flex";
+      }else{
+        setMessage("TEBRİKLER! 🏆 5 BÖLÜMÜN TAMAMINI BİTİRDİN! "+coinCount+"/"+coins.length+" altın topladın.",true);
+        nextBtn.style.display="none";
+      }
     }
   }
   function animate(now){
