@@ -605,7 +605,7 @@ async function renderParkour(area) {
     <div class="parkour-shell">
       <div class="parkour-hud">
         <div><strong id="pkLevel">BÖLÜM 1</strong><span id="pkCheckpoint">Başlangıç</span></div>
-        <div class="parkour-stats"><span id="pkTime">Süre: 0.0 sn</span><span id="pkFalls">Düşüş: 0</span></div>
+        <div class="parkour-stats"><span id="pkTime">Süre: 0.0 sn</span><span id="pkFalls">Düşüş: 0</span><span id="pkCoins">🪙 0 / 20</span></div>
       </div>
       <div class="parkour-stage" id="parkourStage">
         <div class="parkour-message" id="pkMessage">Yükleniyor…</div>
@@ -624,6 +624,7 @@ async function renderParkour(area) {
   const message = area.querySelector("#pkMessage");
   const timeEl = area.querySelector("#pkTime");
   const fallsEl = area.querySelector("#pkFalls");
+  const coinsEl = area.querySelector("#pkCoins");
   const checkpointEl = area.querySelector("#pkCheckpoint");
   const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js");
   if (!area.isConnected) return;
@@ -672,6 +673,24 @@ async function renderParkour(area) {
   platform(2,5,-58,4,4,0x6aa9d8);
   platform(7,5,-67,5,5,0x6dbb82);
   platform(0,6,-77,9,9,0xf0bd50);
+
+  // Toplanabilir altınlar: platformların üzerine ve aralarındaki güvenli geçişlere yerleştirilir.
+  const coinMaterial = new THREE.MeshStandardMaterial({color:0xffd52e, metalness:0.72, roughness:0.2, emissive:0x8a5700, emissiveIntensity:0.35});
+  const coins = [];
+  const coinSpots = [
+    [0,1.15,0],[0,1.15,3],[0,1.15,-7],[-1.1,1.15,-7],
+    [-4,2.15,-15],[-2.9,2.15,-15],[2,3.15,-23],[3,3.15,-23],
+    [7,3.15,-31],[8.1,3.15,-31],[2,4.15,-40],[3.1,4.15,-40],
+    [-4,5.15,-49],[-2.9,5.15,-49],[2,6.15,-58],[3.1,6.15,-58],
+    [7,6.15,-67],[8.1,6.15,-67],[0,7.15,-77],[1.2,7.15,-77]
+  ];
+  coinSpots.forEach(([x,y,z],i)=>{
+    const mesh = new THREE.Mesh(new THREE.TorusGeometry(0.34,0.12,10,20),coinMaterial);
+    mesh.position.set(x,y,z); mesh.rotation.y=Math.PI/2; mesh.castShadow=true; scene.add(mesh);
+    coins.push({mesh,collected:false,phase:i*0.7});
+  });
+  let coinCount=0;
+  function updateCoinHud(){coinsEl.textContent="🪙 "+coinCount+" / "+coins.length;}
 
   // Uzak dekor adaları ve lav denizi
   const lava = new THREE.Mesh(new THREE.BoxGeometry(100,0.4,120), lavaMat);
@@ -735,6 +754,7 @@ async function renderParkour(area) {
   function restart(){
     checkpoint={x:0,y:0,z:3}; checkpointEl.textContent="Başlangıç";
     falls=0; fallsEl.textContent="Düşüş: 0"; startTime=performance.now(); won=false;
+    coinCount=0; coins.forEach(c=>{c.collected=false;c.mesh.visible=true;}); updateCoinHud();
     player.position.set(0,0,3); velocityY=0; active=true;
     setMessage("Hadi başlayalım!",true); setTimeout(()=>setMessage("",false),1000);
   }
@@ -767,6 +787,15 @@ async function renderParkour(area) {
   function update(dt,now){
     if(!active)return;
     spinner.rotation.y+=dt*1.45;
+    coins.forEach(c=>{
+      if(c.collected)return;
+      c.mesh.rotation.y+=dt*2.8;
+      c.mesh.position.y += Math.sin(now*0.003+c.phase)*0.0015;
+      if(player.position.distanceTo(c.mesh.position)<1.05){
+        c.collected=true;c.mesh.visible=false;coinCount++;updateCoinHud();
+        setMessage("Altın topladın! +1 🪙",true);setTimeout(()=>setMessage("",false),650);
+      }
+    });
     platforms.forEach(p=>{
       p.prevX=p.mesh.position.x;p.prevZ=p.mesh.position.z;
       if(p.moving)p.mesh.position.x=p.baseX+Math.sin(now*0.0012+p.phase)*2.0;
@@ -807,7 +836,7 @@ async function renderParkour(area) {
     }
     if(player.position.y < -4.1)respawn();
     if(player.position.z < -74&&Math.abs(player.position.x)<4&&player.position.y>5.2&&!won){
-      won=true;active=false;setMessage("BÖLÜM TAMAMLANDI! 🎉 Baştan başlamak için butona bas.",true);
+      won=true;active=false;setMessage("BÖLÜM TAMAMLANDI! 🎉 "+coinCount+"/"+coins.length+" altın topladın. Baştan başlamak için butona bas.",true);
     }
   }
   function animate(now){

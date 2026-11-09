@@ -31,3 +31,5 @@ Blok Dünyası hayatta kalma güncellemesi: hayvanlar, envanter, üretim, yemek 
 
 
 Yeni oyun: Gökyüzü Parkuru (3D üçüncü şahıs). WASD ile hareket, Space ile zıplama, fareyi sürükleyerek kamera kontrolü. Mobil ekranda dokunmatik yön tuşları bulunur. Three.js kütüphanesi CDN üzerinden yüklenir.
+
+Parkur güncellemesi: Parkur boyunca 20 altın bulunur. Altınlara yaklaşarak topla; HUD üzerinde toplam görünür. Bölüm sonunda topladığın altın sayısı gösterilir. Baştan başla düğmesi altınları sıfırlar.
