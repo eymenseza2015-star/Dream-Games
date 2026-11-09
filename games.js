@@ -709,14 +709,20 @@ async function renderParkour(area) {
   for(const x of [-2.8,2.8]){
     const orb = new THREE.Mesh(new THREE.SphereGeometry(0.32,12,10), mat(0x783f9d)); orb.position.x=x; spinner.add(orb);
   }
-  // Kontrol noktası bayrakları
-  function flag(x,y,z) {
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,3,8), stoneMat); pole.position.set(x,y+1.5,z); scene.add(pole);
-    const cloth = new THREE.Mesh(new THREE.BoxGeometry(1.25,0.72,0.08), goldMat); cloth.position.set(x+0.62,y+2.45,z); scene.add(cloth);
+  // Kontrol noktası bayrakları platformlara bağlıdır; hareketli platformlarla birlikte taşınırlar.
+  function flagOnPlatform(platformRef) {
+    const flagGroup = new THREE.Group();
+    flagGroup.position.set(0,0,0);
+    platformRef.mesh.add(flagGroup);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,3,8), stoneMat);
+    pole.position.set(0,1.5,0); flagGroup.add(pole);
+    const cloth = new THREE.Mesh(new THREE.BoxGeometry(1.25,0.72,0.08), goldMat);
+    cloth.position.set(0.62,2.45,0); flagGroup.add(cloth);
+    return flagGroup;
   }
-  flag(-4,1,-15); flag(-4,4,-49);
+  const checkpointFlags = [flagOnPlatform(platforms[2]), flagOnPlatform(platforms[6])];
   // Bitiş kemeri
-  const goal = new THREE.Group(); goal.position.set(0,6,-77); scene.add(goal);
+  const goal = new THREE.Group(); goal.position.set(0,6,-80.5); scene.add(goal);
   const goalMat = new THREE.MeshStandardMaterial({color:0xffe36e,emissive:0x8a5c08,emissiveIntensity:0.7});
   for(const [x,y] of [[-2.5,1.8],[2.5,1.8],[0,3.6]]){
     const piece = new THREE.Mesh(new THREE.BoxGeometry(x===0?5.3:0.35,x===0?0.35:3.6,0.35),goalMat);
@@ -752,7 +758,7 @@ async function renderParkour(area) {
     });
     coinCount=0; updateCoinHud();
     spinner.position.set(layout[4][0],layout[4][1]+1.05,layout[4][2]);
-    goal.position.set(layout[9][0],layout[9][1],layout[9][2]);
+    goal.position.set(layout[9][0],layout[9][1],layout[9][2]-3.5);
     levelEl.textContent="BÖLÜM "+(index+1)+" / 5";
     checkpoint={x:layout[0][0],y:layout[0][1],z:layout[0][2]};
     checkpointEl.textContent="Başlangıç";
@@ -878,9 +884,25 @@ async function renderParkour(area) {
         if(p.moving){player.position.x+=p.mesh.position.x-p.prevX;player.position.z+=p.mesh.position.z-p.prevZ;}
       }
     }
-    // Dönen çubuğa temas
-    const dxs=player.position.x-spinner.position.x,dzs=player.position.z-spinner.position.z;
-    if(Math.abs(dxs)<3.2&&Math.abs(dzs)<0.6&&Math.abs(player.position.y-spinner.position.y)<1.8)velocityY=Math.min(velocityY,-5);
+    // Dönen çubuğa temas: çubuğun o anki açısına göre çarpışma kontrolü.
+    const sx=player.position.x-spinner.position.x;
+    const sz=player.position.z-spinner.position.z;
+    const beamAngle=spinner.rotation.y;
+    const beamLocalX=sx*Math.cos(beamAngle)-sz*Math.sin(beamAngle);
+    const beamLocalZ=sx*Math.sin(beamAngle)+sz*Math.cos(beamAngle);
+    const beamVertical=Math.abs((player.position.y+0.95)-spinner.position.y);
+    if(Math.abs(beamLocalX)<3.35&&Math.abs(beamLocalZ)<0.72&&beamVertical<1.55){
+      // Engel çarpması karakteri bölümün başlangıcına gönderir.
+      falls++; fallsEl.textContent="Düşüş: "+falls;
+      const start=levelLayouts[currentLevel][0];
+      checkpoint={x:start[0],y:start[1],z:start[2]};
+      checkpointEl.textContent="Başlangıç";
+      cp1Reached=false;cp2Reached=false;
+      player.position.set(start[0],start[1],start[2]);
+      velocityY=0;grounded=false;
+      setMessage("DÖNEN ENGEL! Başlangıca döndün.",true);
+      setTimeout(()=>setMessage("",false),1100);
+    }
     // Kontrol noktaları
     const cpA=levelLayouts[currentLevel][2], cpB=levelLayouts[currentLevel][6];
     if(!cp1Reached&&Math.abs(player.position.x-cpA[0])<2.2&&Math.abs(player.position.z-cpA[2])<2.2){
@@ -892,7 +914,7 @@ async function renderParkour(area) {
       setMessage("Kontrol noktası kaydedildi!",true);setTimeout(()=>setMessage("",false),1200);
     }
     if(player.position.y < -4.1)respawn();
-    if(player.position.z < goal.position.z+3&&Math.abs(player.position.x-goal.position.x)<4&&player.position.y>goal.position.y-0.8&&!won){
+    if(player.position.z < goal.position.z+0.9&&Math.abs(player.position.x-goal.position.x)<4&&player.position.y>goal.position.y-0.8&&!won){
       won=true;active=false;
       if(currentLevel<4){
         setMessage("BÖLÜM "+(currentLevel+1)+" TAMAMLANDI! 🎉 "+coinCount+"/"+coins.length+" altın topladın. Sonraki bölüme geçebilirsin.",true);
