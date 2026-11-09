@@ -597,3 +597,238 @@ function renderVoxel(area) {
  }).catch(()=>{status.textContent="3D motor yüklenemedi. İnternet bağlantısını kontrol et."});
 }
 
+
+
+// 3D üçüncü şahıs parkur oyunu
+async function renderParkour(area) {
+  area.innerHTML = `
+    <div class="parkour-shell">
+      <div class="parkour-hud">
+        <div><strong id="pkLevel">BÖLÜM 1</strong><span id="pkCheckpoint">Başlangıç</span></div>
+        <div class="parkour-stats"><span id="pkTime">Süre: 0.0 sn</span><span id="pkFalls">Düşüş: 0</span></div>
+      </div>
+      <div class="parkour-stage" id="parkourStage">
+        <div class="parkour-message" id="pkMessage">Yükleniyor…</div>
+        <div class="parkour-crosshair">＋</div>
+      </div>
+      <div class="parkour-bottom">
+        <span>WASD: Hareket · SPACE: Zıpla · Fare: Kamerayı döndür</span>
+        <button class="secondary-button" id="pkRestart">Baştan başla</button>
+      </div>
+      <div class="parkour-touch">
+        <div class="pk-dpad"><button data-pk="forward">▲</button><div><button data-pk="left">◀</button><button data-pk="back">▼</button><button data-pk="right">▶</button></div></div>
+        <button class="pk-jump" data-pk="jump">ZIPLA</button>
+      </div>
+    </div>`;
+  const stage = area.querySelector("#parkourStage");
+  const message = area.querySelector("#pkMessage");
+  const timeEl = area.querySelector("#pkTime");
+  const fallsEl = area.querySelector("#pkFalls");
+  const checkpointEl = area.querySelector("#pkCheckpoint");
+  const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js");
+  if (!area.isConnected) return;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x8bd5ff);
+  scene.fog = new THREE.Fog(0x8bd5ff, 35, 115);
+  const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 180);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  stage.appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0xeaf8ff, 0x60704c, 2.0));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.3);
+  sun.position.set(-12, 25, 15); sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.camera.left = -35; sun.shadow.camera.right = 35;
+  sun.shadow.camera.top = 35; sun.shadow.camera.bottom = -35;
+  scene.add(sun);
+
+  const mat = (color, roughness=0.82) => new THREE.MeshStandardMaterial({ color, roughness });
+  const grassMat = mat(0x4fb477), edgeMat = mat(0x286b58), stoneMat = mat(0x7b8da3);
+  const lavaMat = new THREE.MeshStandardMaterial({ color:0xff542d, emissive:0xc92b08, emissiveIntensity:1.1, roughness:0.45 });
+  const goldMat = new THREE.MeshStandardMaterial({ color:0xffd34f, metalness:0.25, roughness:0.35 });
+  const platforms = [];
+  function platform(x,y,z,w,d,color=0x4fb477, moving=false) {
+    const group = new THREE.Group(); group.position.set(x,y,z); scene.add(group);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(w,0.65,d), mat(color));
+    top.position.y = -0.32; top.castShadow = true; top.receiveShadow = true; group.add(top);
+    const sides = new THREE.Mesh(new THREE.BoxGeometry(w+0.04,0.28,d+0.04), edgeMat);
+    sides.position.y = -0.72; group.add(sides);
+    const p = { mesh:group, x,y,z,w,d, moving, baseX:x, phase:Math.random()*6.28, prevX:x, prevZ:z };
+    platforms.push(p); return p;
+  }
+  // Başlangıç ve giderek zorlaşan platform parkuru
+  platform(0,0,3,9,9,0x55bd7b);
+  platform(0,0,-7,5,5,0x54b7a1);
+  platform(-4,1,-15,4.5,4.5,0x6dbb82);
+  platform(2,2,-23,4,4,0x6aa9d8);
+  platform(7,2,-31,4.2,4.2,0x6dbb82,true);
+  platform(2,3,-40,4,4,0x6aa9d8);
+  platform(-4,4,-49,4,4,0x6dbb82,true);
+  platform(2,5,-58,4,4,0x6aa9d8);
+  platform(7,5,-67,5,5,0x6dbb82);
+  platform(0,6,-77,9,9,0xf0bd50);
+
+  // Uzak dekor adaları ve lav denizi
+  const lava = new THREE.Mesh(new THREE.BoxGeometry(100,0.4,120), lavaMat);
+  lava.position.set(0,-5,-34); scene.add(lava);
+  for(let i=0;i<22;i++){
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5+Math.random()*1.5,0), mat(i%2?0x7b9a9b:0x5b8791));
+    rock.position.set((Math.random()-.5)*55,-2-Math.random()*3,-Math.random()*90);
+    scene.add(rock);
+  }
+  // Dönen engel
+  const spinner = new THREE.Group(); spinner.position.set(2,3.05,-40); scene.add(spinner);
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(6.4,0.28,0.35), mat(0xf3a53b));
+  beam.castShadow=true; spinner.add(beam);
+  for(const x of [-2.8,2.8]){
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.32,12,10), mat(0x783f9d)); orb.position.x=x; spinner.add(orb);
+  }
+  // Kontrol noktası bayrakları
+  function flag(x,y,z) {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,3,8), stoneMat); pole.position.set(x,y+1.5,z); scene.add(pole);
+    const cloth = new THREE.Mesh(new THREE.BoxGeometry(1.25,0.72,0.08), goldMat); cloth.position.set(x+0.62,y+2.45,z); scene.add(cloth);
+  }
+  flag(-4,1,-15); flag(-4,4,-49);
+  // Bitiş kemeri
+  const goal = new THREE.Group(); goal.position.set(0,6,-77); scene.add(goal);
+  const goalMat = new THREE.MeshStandardMaterial({color:0xffe36e,emissive:0x8a5c08,emissiveIntensity:0.7});
+  for(const [x,y] of [[-2.5,1.8],[2.5,1.8],[0,3.6]]){
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(x===0?5.3:0.35,x===0?0.35:3.6,0.35),goalMat);
+    piece.position.set(x,y,0); goal.add(piece);
+  }
+
+  // Basit, özgün blok karakter
+  const player = new THREE.Group(); scene.add(player);
+  const skin=mat(0xf1bd91), shirt=mat(0x375fbd), pants=mat(0x28364f), shoe=mat(0x202633);
+  function cube(parent,w,h,d,material,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m;}
+  cube(player,0.72,0.82,0.38,shirt,0,1.18,0);
+  cube(player,0.48,0.48,0.45,skin,0,1.88,0);
+  const leftLeg=new THREE.Group(), rightLeg=new THREE.Group();
+  leftLeg.position.set(-0.2,0.82,0); rightLeg.position.set(0.2,0.82,0);
+  player.add(leftLeg,rightLeg);
+  cube(leftLeg,0.27,0.78,0.3,pants,0,-0.38,0); cube(leftLeg,0.3,0.18,0.42,shoe,0,-0.78,-0.04);
+  cube(rightLeg,0.27,0.78,0.3,pants,0,-0.38,0); cube(rightLeg,0.3,0.18,0.42,shoe,0,-0.78,-0.04);
+  const leftArm=new THREE.Group(), rightArm=new THREE.Group();
+  leftArm.position.set(-0.48,1.48,0); rightArm.position.set(0.48,1.48,0); player.add(leftArm,rightArm);
+  cube(leftArm,0.23,0.78,0.27,shirt,0,-0.36,0); cube(rightArm,0.23,0.78,0.27,shirt,0,-0.36,0);
+  player.position.set(0,0,3);
+
+  const keys={}; let yaw=0, pitch=0.16, velocityY=0, grounded=false, active=true, won=false;
+  let checkpoint={x:0,y:0,z:3}, falls=0, startTime=performance.now(), last=performance.now(), walk=0;
+  const moveSpeed=7.2, playerRadius=0.38, playerHeight=2.35;
+  const clock=new THREE.Clock();
+  function resize(){const w=Math.max(320,stage.clientWidth),h=Math.max(300,stage.clientHeight);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);}
+  resize(); const ro=new ResizeObserver(resize); ro.observe(stage);
+  function setMessage(text,show=true){message.textContent=text;message.classList.toggle("show",show);}
+  setMessage("WASD ile ilerle, SPACE ile zıpla. Fareyi sürükleyerek kamerayı döndür.",true);
+  let helpTimer=setTimeout(()=>setMessage("",false),4200);
+  function respawn(){
+    player.position.set(checkpoint.x,checkpoint.y,checkpoint.z);
+    velocityY=0; grounded=false;
+    falls++; fallsEl.textContent="Düşüş: "+falls;
+  }
+  function restart(){
+    checkpoint={x:0,y:0,z:3}; checkpointEl.textContent="Başlangıç";
+    falls=0; fallsEl.textContent="Düşüş: 0"; startTime=performance.now(); won=false;
+    player.position.set(0,0,3); velocityY=0; active=true;
+    setMessage("Hadi başlayalım!",true); setTimeout(()=>setMessage("",false),1000);
+  }
+  area.querySelector("#pkRestart").addEventListener("click",restart);
+  // Mouse sürükleme ile kamera; pointer lock gerektirmez.
+  let dragging=false,lastX=0,lastY=0;
+  renderer.domElement.addEventListener("pointerdown",e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId);});
+  renderer.domElement.addEventListener("pointerup",()=>dragging=false);
+  renderer.domElement.addEventListener("pointercancel",()=>dragging=false);
+  renderer.domElement.addEventListener("pointermove",e=>{
+    if(!dragging)return;
+    yaw-=(e.clientX-lastX)*0.006;
+    pitch=Math.max(-0.05,Math.min(0.65,pitch+(e.clientY-lastY)*0.003));
+    lastX=e.clientX;lastY=e.clientY;
+  });
+  function keyDown(e){
+    if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();
+    keys[e.code]=true;
+    if(e.code==="Space"&&grounded&&active){velocityY=9.2;grounded=false;}
+  }
+  function keyUp(e){keys[e.code]=false;}
+  window.addEventListener("keydown",keyDown); window.addEventListener("keyup",keyUp);
+  area.querySelectorAll("[data-pk]").forEach(btn=>{
+    const k=btn.dataset.pk, code={forward:"KeyW",back:"KeyS",left:"KeyA",right:"KeyD",jump:"Space"}[k];
+    const on=ev=>{ev.preventDefault();keys[code]=true;if(k==="jump"&&grounded&&active){velocityY=9.2;grounded=false;}};
+    const off=ev=>{ev.preventDefault();keys[code]=false;};
+    btn.addEventListener("pointerdown",on);btn.addEventListener("pointerup",off);btn.addEventListener("pointerleave",off);btn.addEventListener("pointercancel",off);
+  });
+
+  function update(dt,now){
+    if(!active)return;
+    spinner.rotation.y+=dt*1.45;
+    platforms.forEach(p=>{
+      p.prevX=p.mesh.position.x;p.prevZ=p.mesh.position.z;
+      if(p.moving)p.mesh.position.x=p.baseX+Math.sin(now*0.0012+p.phase)*2.0;
+    });
+    const forward=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);
+    const side=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
+    const len=Math.hypot(forward,side)||1;
+    const fx=-Math.sin(yaw), fz=-Math.cos(yaw), rx=Math.cos(yaw), rz=-Math.sin(yaw);
+    const dx=(fx*forward+rx*side)/len*moveSpeed*dt;
+    const dz=(fz*forward+rz*side)/len*moveSpeed*dt;
+    player.position.x+=dx;player.position.z+=dz;
+    if(Math.abs(dx)+Math.abs(dz)>0.001){
+      player.rotation.y=Math.atan2(dx,dz);
+      walk+=dt*11;leftLeg.rotation.x=Math.sin(walk)*0.65;rightLeg.rotation.x=-Math.sin(walk)*0.65;
+      leftArm.rotation.x=-Math.sin(walk)*0.42;rightArm.rotation.x=Math.sin(walk)*0.42;
+    }else{leftLeg.rotation.x*=0.8;rightLeg.rotation.x*=0.8;leftArm.rotation.x*=0.8;rightArm.rotation.x*=0.8;}
+    const oldY=player.position.y;
+    velocityY-=22*dt;player.position.y+=velocityY*dt;grounded=false;
+    // Platform üst yüzeyine iniş kontrolü
+    for(const p of platforms){
+      const px=p.mesh.position.x,pz=p.mesh.position.z;
+      const within=Math.abs(player.position.x-px)<p.w/2+playerRadius && Math.abs(player.position.z-pz)<p.d/2+playerRadius;
+      const top=p.y;
+      if(within&&velocityY<=0&&oldY>=top-0.05&&player.position.y<=top+0.12){
+        player.position.y=top;velocityY=0;grounded=true;
+        if(p.moving){player.position.x+=p.mesh.position.x-p.prevX;player.position.z+=p.mesh.position.z-p.prevZ;}
+      }
+    }
+    // Dönen çubuğa temas
+    const dxs=player.position.x-spinner.position.x,dzs=player.position.z-spinner.position.z;
+    if(Math.abs(dxs)<3.2&&Math.abs(dzs)<0.6&&Math.abs(player.position.y-spinner.position.y)<1.8)velocityY=Math.min(velocityY,-5);
+    // Kontrol noktaları
+    if(Math.abs(player.position.x+4)<2.2&&Math.abs(player.position.z+15)<2.2&&checkpoint.z>-15){
+      checkpoint={x:-4,y:1,z:-15};checkpointEl.textContent="Kontrol noktası 1";setMessage("Kontrol noktası kaydedildi!",true);setTimeout(()=>setMessage("",false),1200);
+    }
+    if(Math.abs(player.position.x+4)<2.2&&Math.abs(player.position.z+49)<2.2&&checkpoint.z>-49){
+      checkpoint={x:-4,y:4,z:-49};checkpointEl.textContent="Kontrol noktası 2";setMessage("Kontrol noktası kaydedildi!",true);setTimeout(()=>setMessage("",false),1200);
+    }
+    if(player.position.y < -4.1)respawn();
+    if(player.position.z < -74&&Math.abs(player.position.x)<4&&player.position.y>5.2&&!won){
+      won=true;active=false;setMessage("BÖLÜM TAMAMLANDI! 🎉 Baştan başlamak için butona bas.",true);
+    }
+  }
+  function animate(now){
+    if(!area.isConnected){cleanup();return;}
+    const dt=Math.min(0.035,(now-last)/1000);last=now;
+    update(dt,now);
+    timeEl.textContent="Süre: "+((now-startTime)/1000).toFixed(1)+" sn";
+    const target=new THREE.Vector3(player.position.x,player.position.y+1.25,player.position.z);
+    const distance=8.5, height=3.8;
+    const desired=new THREE.Vector3(target.x+Math.sin(yaw)*distance,target.y+height+pitch*4,target.z+Math.cos(yaw)*distance);
+    camera.position.lerp(desired,1-Math.pow(0.001,dt));camera.lookAt(target);
+    renderer.render(scene,camera);
+    raf=requestAnimationFrame(animate);
+  }
+  let raf=requestAnimationFrame(animate);
+  function cleanup(){
+    active=false;cancelAnimationFrame(raf);clearTimeout(helpTimer);ro.disconnect();
+    window.removeEventListener("keydown",keyDown);window.removeEventListener("keyup",keyUp);
+    renderer.dispose();scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
+    if(renderer.domElement.parentNode)renderer.domElement.parentNode.removeChild(renderer.domElement);
+    if(window.__parkourCleanup===cleanup)window.__parkourCleanup=null;
+  }
+  window.__parkourCleanup=cleanup;
+}

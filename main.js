@@ -4,7 +4,7 @@ const modalTitle = document.getElementById("modalTitle");
 document.getElementById("year").textContent = new Date().getFullYear();
 document.querySelectorAll("[data-game]").forEach(button => {
   button.addEventListener("click", () => {
-    const game = button.dataset.game; gameArea.innerHTML = "";
+    const game = button.dataset.game; if (window.__parkourCleanup) window.__parkourCleanup(); gameArea.innerHTML = "";
     if (game === "race") { modalTitle.textContent = "Turbo Yarış"; renderRace(gameArea); }
     if (game === "memory") { modalTitle.textContent = "Hafıza Eşleştirme"; renderMemory(gameArea); }
     if (game === "tictactoe") { modalTitle.textContent = "XOX"; renderTicTacToe(gameArea); }
@@ -16,10 +16,11 @@ document.querySelectorAll("[data-game]").forEach(button => {
     if (game === "rps") { modalTitle.textContent = "Taş-Kâğıt-Makas"; renderRPS(gameArea); }
     if (game === "tetris") { modalTitle.textContent = "Tetris"; renderTetris(gameArea); }
     if (game === "voxel") { modalTitle.textContent = "Blok Dünyası"; renderVoxel(gameArea); }
+    if (game === "parkour") { modalTitle.textContent = "Gökyüzü Parkuru"; renderParkour(gameArea); }
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.getElementById("closeModal").focus();
   });
 });
-function closeGame() { modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true"); gameArea.innerHTML = ""; }
+function closeGame() { if (window.__parkourCleanup) window.__parkourCleanup(); modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true"); gameArea.innerHTML = ""; }
 document.getElementById("closeModal").addEventListener("click", closeGame);
 modal.addEventListener("click", event => { if (event.target === modal) closeGame(); });
 document.addEventListener("keydown", event => { if (event.key === "Escape") closeGame(); });

@@ -188,3 +188,23 @@ button:focus-visible,a:focus-visible{outline:3px solid #63dfff;outline-offset:3p
 .voxel-tools button.selected{border-color:#9b8cff;background:#51468f}
 .voxel-tip{text-align:center;color:#aebbd2;font-size:11px}
 @media(max-width:600px){.voxel-stage{height:55vh;min-height:300px}.voxel-hud{font-size:10px}}
+
+
+/* 3D Gökyüzü Parkuru */
+.parkour-shell{max-width:1000px;margin:0 auto;color:#eef2ff}
+.parkour-hud{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 0 9px;color:#cbd8eb;font-size:12px}
+.parkour-hud>div:first-child{display:flex;flex-direction:column;gap:3px}
+.parkour-hud strong{font-size:14px;color:#fff;letter-spacing:.08em}
+.parkour-stats{display:flex;gap:14px;flex-wrap:wrap}
+.parkour-stage{height:min(66vh,590px);min-height:350px;position:relative;overflow:hidden;border:1px solid #ffffff35;border-radius:14px;background:#8bd5ff;touch-action:none}
+.parkour-stage canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
+.parkour-message{position:absolute;z-index:3;left:50%;top:16px;transform:translateX(-50%);max-width:90%;padding:10px 15px;border-radius:10px;background:#101a2bd9;color:#fff;text-align:center;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
+.parkour-message.show{opacity:1}
+.parkour-crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:20px;color:#fff;text-shadow:0 1px 4px #0008;pointer-events:none;opacity:.55}
+.parkour-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;color:#aebbd2;font-size:11px}
+.parkour-touch{display:none;justify-content:space-between;align-items:end;margin-top:12px;gap:15px;user-select:none}
+.pk-dpad{display:flex;flex-direction:column;align-items:center;gap:5px}
+.pk-dpad>div{display:flex;gap:5px}
+.parkour-touch button{border:1px solid #ffffff40;background:#293955d9;color:#fff;border-radius:12px;width:45px;height:43px;font-size:18px;font-weight:800;touch-action:none}
+.parkour-touch .pk-jump{width:78px;height:58px;border-radius:50%;background:#6554b8;font-size:12px}
+@media(max-width:700px){.parkour-stage{height:54vh;min-height:300px}.parkour-touch{display:flex}.parkour-bottom>span{max-width:65%}}
