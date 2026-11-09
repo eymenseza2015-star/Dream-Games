@@ -702,8 +702,11 @@ async function renderParkour(area) {
     rock.position.set((Math.random()-.5)*55,-2-Math.random()*3,-Math.random()*90);
     scene.add(rock);
   }
-  // Dönen engel
-  const spinner = new THREE.Group(); spinner.position.set(2,3.05,-40); scene.add(spinner);
+  // Dönen engel, 5. platforma bağlıdır; platform hareket edince engel de taşınır.
+  const spinner = new THREE.Group();
+  platforms[4].mesh.add(spinner);
+  spinner.position.set(0,1.05,0);
+  const spinnerWorldPosition = new THREE.Vector3();
   const beam = new THREE.Mesh(new THREE.BoxGeometry(6.4,0.28,0.35), mat(0xf3a53b));
   beam.castShadow=true; spinner.add(beam);
   for(const x of [-2.8,2.8]){
@@ -757,7 +760,8 @@ async function renderParkour(area) {
       c.collected=false; c.mesh.visible=true;
     });
     coinCount=0; updateCoinHud();
-    spinner.position.set(layout[4][0],layout[4][1]+1.05,layout[4][2]);
+    // Dönen engel platform[4] çocuğu olduğu için yerel konumu sabit kalır.
+    spinner.position.set(0,1.05,0);
     goal.position.set(layout[9][0],layout[9][1],layout[9][2]-3.5);
     levelEl.textContent="BÖLÜM "+(index+1)+" / 5";
     checkpoint={x:layout[0][0],y:layout[0][1],z:layout[0][2]};
@@ -885,22 +889,19 @@ async function renderParkour(area) {
       }
     }
     // Dönen çubuğa temas: çubuğun o anki açısına göre çarpışma kontrolü.
-    const sx=player.position.x-spinner.position.x;
-    const sz=player.position.z-spinner.position.z;
+    spinner.getWorldPosition(spinnerWorldPosition);
+    const sx=player.position.x-spinnerWorldPosition.x;
+    const sz=player.position.z-spinnerWorldPosition.z;
     const beamAngle=spinner.rotation.y;
     const beamLocalX=sx*Math.cos(beamAngle)-sz*Math.sin(beamAngle);
     const beamLocalZ=sx*Math.sin(beamAngle)+sz*Math.cos(beamAngle);
-    const beamVertical=Math.abs((player.position.y+0.95)-spinner.position.y);
+    const beamVertical=Math.abs((player.position.y+0.95)-spinnerWorldPosition.y);
     if(Math.abs(beamLocalX)<3.35&&Math.abs(beamLocalZ)<0.72&&beamVertical<1.55){
-      // Engel çarpması karakteri bölümün başlangıcına gönderir.
-      falls++; fallsEl.textContent="Düşüş: "+falls;
-      const start=levelLayouts[currentLevel][0];
-      checkpoint={x:start[0],y:start[1],z:start[2]};
-      checkpointEl.textContent="Başlangıç";
-      cp1Reached=false;cp2Reached=false;
-      player.position.set(start[0],start[1],start[2]);
-      velocityY=0;grounded=false;
-      setMessage("DÖNEN ENGEL! Başlangıca döndün.",true);
+      // Engel çarpması son etkin kontrol noktasına; yoksa bölüm başlangıcına döndürür.
+      respawn();
+      setMessage(checkpointEl.textContent==="Başlangıç"
+        ? "DÖNEN ENGEL! Başlangıca döndün."
+        : "DÖNEN ENGEL! Son kontrol noktasına döndün.",true);
       setTimeout(()=>setMessage("",false),1100);
     }
     // Kontrol noktaları
