@@ -656,6 +656,8 @@ async function renderParkour(area) {
   const goldMat = new THREE.MeshStandardMaterial({ color:0xffd34f, metalness:0.25, roughness:0.35 });
   const platforms = [];
   function platform(x,y,z,w,d,color=0x4fb477, moving=false) {
+    // Daha rahat inişler için tüm platformları %25 genişlet ve derinleştir.
+    w *= 1.25; d *= 1.25;
     const group = new THREE.Group(); group.position.set(x,y,z); scene.add(group);
     const top = new THREE.Mesh(new THREE.BoxGeometry(w,0.65,d), mat(color));
     top.position.y = -0.32; top.castShadow = true; top.receiveShadow = true; group.add(top);
@@ -707,10 +709,10 @@ async function renderParkour(area) {
   platforms[4].mesh.add(spinner);
   spinner.position.set(0,1.05,0);
   const spinnerWorldPosition = new THREE.Vector3();
-  const beam = new THREE.Mesh(new THREE.BoxGeometry(6.4,0.28,0.35), mat(0xf3a53b));
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(4.8,0.24,0.30), mat(0xf3a53b));
   beam.castShadow=true; spinner.add(beam);
-  for(const x of [-2.8,2.8]){
-    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.32,12,10), mat(0x783f9d)); orb.position.x=x; spinner.add(orb);
+  for(const x of [-2.1,2.1]){
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.24,12,10), mat(0x783f9d)); orb.position.x=x; spinner.add(orb);
   }
   // Kontrol noktası bayrakları platformlara bağlıdır; hareketli platformlarla birlikte taşınırlar.
   function flagOnPlatform(platformRef) {
@@ -896,7 +898,7 @@ async function renderParkour(area) {
     const beamLocalX=sx*Math.cos(beamAngle)-sz*Math.sin(beamAngle);
     const beamLocalZ=sx*Math.sin(beamAngle)+sz*Math.cos(beamAngle);
     const beamVertical=Math.abs((player.position.y+0.95)-spinnerWorldPosition.y);
-    if(Math.abs(beamLocalX)<3.35&&Math.abs(beamLocalZ)<0.72&&beamVertical<1.55){
+    if(Math.abs(beamLocalX)<2.55&&Math.abs(beamLocalZ)<0.58&&beamVertical<1.55){
       // Engel çarpması son etkin kontrol noktasına; yoksa bölüm başlangıcına döndürür.
       respawn();
       setMessage(checkpointEl.textContent==="Başlangıç"
