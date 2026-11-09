@@ -687,7 +687,7 @@ async function renderParkour(area) {
   coinSpots.forEach(([x,y,z],i)=>{
     const mesh = new THREE.Mesh(new THREE.TorusGeometry(0.34,0.12,10,20),coinMaterial);
     mesh.position.set(x,y,z); mesh.rotation.y=Math.PI/2; mesh.castShadow=true; scene.add(mesh);
-    coins.push({mesh,collected:false,phase:i*0.7});
+    coins.push({mesh,collected:false,phase:i*0.7,baseY:y});
   });
   let coinCount=0;
   function updateCoinHud(){coinsEl.textContent="🪙 "+coinCount+" / "+coins.length;}
@@ -790,8 +790,15 @@ async function renderParkour(area) {
     coins.forEach(c=>{
       if(c.collected)return;
       c.mesh.rotation.y+=dt*2.8;
-      c.mesh.position.y += Math.sin(now*0.003+c.phase)*0.0015;
-      if(player.position.distanceTo(c.mesh.position)<1.05){
+      // Altınları sabit başlangıç yüksekliği çevresinde hafifçe yüzdür.
+      c.mesh.position.y = c.baseY + Math.sin(now*0.003+c.phase)*0.12;
+
+      // Karakterin ayak noktası yerine gövde merkeziyle mesafe ölç.
+      const dx = player.position.x - c.mesh.position.x;
+      const dz = player.position.z - c.mesh.position.z;
+      const playerCenterY = player.position.y + 1.15;
+      const dy = playerCenterY - c.mesh.position.y;
+      if(Math.hypot(dx, dy, dz) < 1.45){
         c.collected=true;c.mesh.visible=false;coinCount++;updateCoinHud();
         setMessage("Altın topladın! +1 🪙",true);setTimeout(()=>setMessage("",false),650);
       }
