@@ -214,3 +214,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #63dfff;outline-offset:3p
 .pk-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #pkNext{background:linear-gradient(135deg,#7657df,#4f39a8);color:#fff;border:0}
 @media(max-width:600px){.pk-actions{width:100%;justify-content:center}.pk-actions button{flex:1}}
+
+/* Final bölüm kutlaması */
+.parkour-message.celebration{top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,88%);max-width:88%;padding:26px 22px;border:2px solid #ffd86b;border-radius:20px;background:linear-gradient(135deg,#18264beF,#58318beF);box-shadow:0 0 0 9999px #080d1b88,0 0 35px #ffd86b99;color:#fff;font-size:clamp(17px,3vw,25px);font-weight:800;line-height:1.65;white-space:pre-line;opacity:1;animation:parkourCelebrate .65s ease-out both;pointer-events:auto}
+@keyframes parkourCelebrate{0%{opacity:0;transform:translate(-50%,-50%) scale(.65) rotate(-3deg)}65%{transform:translate(-50%,-50%) scale(1.06)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}

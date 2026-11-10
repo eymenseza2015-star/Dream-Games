@@ -676,7 +676,7 @@ async function renderParkour(area) {
   platform(-4,4,-49,4,4,0x6dbb82,true);
   platform(2,5,-58,4,4,0x6aa9d8);
   platform(7,5,-67,5,5,0x6dbb82);
-  platform(0,6,-77,9,9,0xf0bd50);
+  platform(0,6,-77,14,14,0xf0bd50);
 
   // Toplanabilir altınlar: platformların üzerine ve aralarındaki güvenli geçişlere yerleştirilir.
   const coinMaterial = new THREE.MeshStandardMaterial({color:0xffd52e, metalness:0.72, roughness:0.2, emissive:0x8a5700, emissiveIntensity:0.35});
@@ -770,6 +770,7 @@ async function renderParkour(area) {
     checkpointEl.textContent="Başlangıç";
     cp1Reached=false; cp2Reached=false;
     nextBtn.style.display="none";
+    message.classList.remove("celebration");
     player.position.set(layout[0][0],layout[0][1],layout[0][2]);
     velocityY=0; falls=0; fallsEl.textContent="Düşüş: 0";
     startTime=performance.now(); won=false; active=true;
@@ -923,7 +924,8 @@ async function renderParkour(area) {
         setMessage("BÖLÜM "+(currentLevel+1)+" TAMAMLANDI! 🎉 "+coinCount+"/"+coins.length+" altın topladın. Sonraki bölüme geçebilirsin.",true);
         nextBtn.style.display="inline-flex";
       }else{
-        setMessage("TEBRİKLER! 🏆 5 BÖLÜMÜN TAMAMINI BİTİRDİN! "+coinCount+"/"+coins.length+" altın topladın.",true);
+        message.classList.add("celebration");
+        setMessage("🎉✨ TEBRİKLER! ✨🎉\n🏆 5 BÖLÜMÜN TAMAMINI BİTİRDİN! 🏆\nHarika bir parkur başarısı!\n🪙 "+coinCount+"/"+coins.length+" altın topladın. 🎊",true);
         nextBtn.style.display="none";
       }
     }
